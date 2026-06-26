@@ -216,7 +216,7 @@ Return `null` explicitly when a field exists but has no value. Do not omit the f
 
 > ⚠️ **Exception — Response envelope fields only:**
 > Optional envelope fields (`included`, `pagination`, `links`, `meta`) are **omitted**
-> when absent — not returned as `null`. This rule applies to the envelope structure only.
+> when absent — not returned as `null`. This applies to the envelope only.
 > All resource data fields (inside `data`) follow the `null` rule above.
 > See [03-response-standard.md](./03-response-standard.md#null-vs-omitted-fields).
 
