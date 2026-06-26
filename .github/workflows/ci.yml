@@ -37,7 +37,6 @@ jobs:
           args: >
             --no-progress
             --include-fragments
-            --base .
             --offline
             '**/*.md'
           fail: true
