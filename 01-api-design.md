@@ -21,12 +21,12 @@ APIs must follow REST (Representational State Transfer) principles:
 
 Resources are things, not actions. The HTTP method defines the action.
 
-| Wrong (verb)          | Correct (noun)    |
-|-----------------------|-------------------|
-| `GET /getUsers`       | `GET /users`      |
-| `POST /createUser`    | `POST /users`     |
-| `POST /deleteUser/1`  | `DELETE /users/1` |
-| `GET /getUserOrders`  | `GET /users/1/orders` |
+| Wrong (verb)         | Correct (noun)        |
+| -------------------- | --------------------- |
+| `GET /getUsers`      | `GET /users`          |
+| `POST /createUser`   | `POST /users`         |
+| `POST /deleteUser/1` | `DELETE /users/1`     |
+| `GET /getUserOrders` | `GET /users/1/orders` |
 
 ### Use Plural Nouns
 
@@ -75,32 +75,32 @@ GET /items?order_id=42&user_id=1
 https://api.example.com/api/v1/{resource}/{id}/{sub-resource}
 ```
 
-| Segment       | Description                          | Example           |
-|---------------|--------------------------------------|-------------------|
-| `api`         | Fixed prefix                         | `api`             |
-| `v1`          | API version                          | `v1`, `v2`        |
-| `{resource}`  | Plural noun, lowercase, hyphenated   | `users`, `audit-logs` |
-| `{id}`        | Resource identifier                  | `1`, `uuid`       |
-| `{sub-resource}` | Nested resource                   | `orders`, `roles` |
+| Segment          | Description                        | Example               |
+| ---------------- | ---------------------------------- | --------------------- |
+| `api`            | Fixed prefix                       | `api`                 |
+| `v1`             | API version                        | `v1`, `v2`            |
+| `{resource}`     | Plural noun, lowercase, hyphenated | `users`, `audit-logs` |
+| `{id}`           | Resource identifier                | UUID v4               |
+| `{sub-resource}` | Nested resource                    | `orders`, `roles`     |
 
 ---
 
 ## HTTP Methods
 
-| Method | Purpose | Idempotent | Body |
-|--------|---------|------------|------|
-| `GET` | Retrieve resource(s) | Yes | No |
-| `POST` | Create a new resource | No | Yes |
-| `PUT` | Replace a resource entirely | Yes | Yes |
-| `PATCH` | Update part of a resource | Yes | Yes |
-| `DELETE` | Remove a resource | Yes | No |
+| Method   | Purpose                     | Idempotent | Body |
+| -------- | --------------------------- | ---------- | ---- |
+| `GET`    | Retrieve resource(s)        | Yes        | No   |
+| `POST`   | Create a new resource       | No         | Yes  |
+| `PUT`    | Replace a resource entirely | Yes        | Yes  |
+| `PATCH`  | Update part of a resource   | Yes        | Yes  |
+| `DELETE` | Remove a resource           | Yes        | No   |
 
 ### PUT vs PATCH
 
 - `PUT` replaces the entire resource — client must send all fields.
 - `PATCH` updates only the provided fields — client sends only what changes.
 
-```json
+```
 // PUT /users/1 — must include all fields
 { "name": "Vandet", "email": "seanvandet@gmail.com", "status": "active" }
 
@@ -119,6 +119,18 @@ POST /users/{id}/verify-email
 POST /auth/refresh
 POST /auth/logout
 ```
+
+### Bulk Actions
+
+For bulk operations on collections, use a descriptive path under the resource:
+
+```
+POST   /api/v1/users/bulk          bulk create
+DELETE /api/v1/users/bulk          bulk delete
+POST   /api/v1/orders/bulk-cancel  bulk state-change action
+```
+
+Bulk action paths use hyphens and follow the same lowercase convention as resources.
 
 ---
 
@@ -139,13 +151,10 @@ DELETE /api/v1/users/{id}      Delete a user
 
 - Prefer **UUID v4** (`550e8400-e29b-41d4-a716-446655440000`) for all public-facing IDs.
 - Never expose raw auto-increment integers in public URLs — they allow enumeration attacks.
-- If integer IDs are used internally, expose them as UUID v4 in all API responses.
-- Recommended libraries: `ramsey/uuid` (PHP), `uuid` (Node.js), `java.util.UUID` (Java),
-  `uuid` (Python), `github.com/google/uuid` (Go).
+- If integer IDs are used internally, always expose them as UUID v4 in all API responses.
+- Recommended libraries: `ramsey/uuid` (PHP), `uuid` (Node.js), `java.util.UUID` (Java), `uuid` (Python), `github.com/google/uuid` (Go).
 
-> **Why UUID over Hashids?** Hashids are reversible and require a secret. UUID v4 is
-> random, non-reversible, and universally understood. Use Hashids only if you need
-> short, readable slugs and understand the trade-offs.
+> **Why UUID over Hashids?** Hashids are reversible and require a secret. UUID v4 is random, non-reversible, and universally understood. Use Hashids only if you need short readable slugs and understand the trade-offs.
 
 ---
 
@@ -153,7 +162,7 @@ DELETE /api/v1/users/{id}      Delete a user
 
 All request and response field names must use **`snake_case`**.
 
-```json
+```
 // Correct
 { "first_name": "Vandet", "created_at": "2026-06-26T10:30:00Z" }
 
@@ -185,7 +194,7 @@ All dates and timestamps must use **ISO 8601** format in UTC.
 
 Use `true` / `false` — never `0` / `1` or `"yes"` / `"no"`.
 
-```json
+```
 { "is_active": true, "email_verified": false }
 ```
 
@@ -197,7 +206,7 @@ Prefix boolean fields with `is_`, `has_`, or `can_` for clarity.
 
 Return `null` explicitly when a field exists but has no value. Do not omit the field.
 
-```json
+```
 // Correct — field exists, no value
 { "deleted_at": null }
 
@@ -215,6 +224,7 @@ Return `null` explicitly when a field exists but has no value. Do not omit the f
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.1     | 2026-06-26 | Added UUID library recommendations, bulk action URL pattern, strengthened null-fields exception note |
+| 1.0     | 2026-06-26 | Initial release                                     |

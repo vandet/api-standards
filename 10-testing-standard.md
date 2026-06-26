@@ -6,16 +6,15 @@ Unit, integration, feature, contract, and E2E testing strategy for APIs.
 
 ## Minimum Coverage
 
-| Coverage type | Minimum required |
-|---------------|-----------------|
-| Line coverage | **80%** |
-| Branch coverage | **70%** |
-| Function coverage | **80%** |
+| Coverage type     | Minimum required |
+|-------------------|-----------------|
+| Line coverage     | **80%**         |
+| Branch coverage   | **70%**         |
+| Function coverage | **80%**         |
 
-> **Do not game coverage metrics.** A test that executes code without
-> asserting its output does not count as meaningful coverage. Every test
-> must assert at least one of: response status code, response body field,
-> error code, or side effect.
+> **Do not game coverage metrics.** A test that executes code without asserting its
+> output does not count as meaningful coverage. Every test must assert at least one of:
+> response status code, response body field, error code, or side effect.
 
 Coverage is enforced in CI — PRs below the threshold are blocked from merging.
 
@@ -23,12 +22,12 @@ Coverage is enforced in CI — PRs below the threshold are blocked from merging.
 
 ## Test Types
 
-| Type | What it tests | Tools |
-|------|--------------|-------|
-| Unit | Individual functions, actions, DTOs | PHPUnit/Pest, JUnit, Jest, pytest |
-| Feature / Integration | Full HTTP request → response | Pest, Spring MockMvc, Supertest |
-| Contract | API shape matches the spec | Schemathesis, Pact, Portman |
-| E2E | Full user flow across services | Playwright, Postman/Newman |
+| Type                  | What it tests                       | Tools                             |
+| --------------------- | ----------------------------------- | --------------------------------- |
+| Unit                  | Individual functions, actions, DTOs | PHPUnit/Pest, JUnit, Jest, pytest |
+| Feature / Integration | Full HTTP request → response        | Pest, Spring MockMvc, Supertest   |
+| Contract              | API shape matches the spec          | Schemathesis, Portman, Pact       |
+| E2E                   | Full user flow across services      | Playwright, Postman/Newman        |
 
 ---
 
@@ -37,9 +36,9 @@ Coverage is enforced in CI — PRs below the threshold are blocked from merging.
 All API code must follow TDD:
 
 ```
-1. Write the test (RED)       — test fails, no implementation yet
+1. Write the test (RED)             — test fails, no implementation yet
 2. Write the implementation (GREEN) — minimal code to pass the test
-3. Refactor (IMPROVE)         — clean up without breaking the test
+3. Refactor (IMPROVE)               — clean up without breaking the test
 ```
 
 **Never write implementation before the test.**
@@ -127,6 +126,13 @@ it('returns 401 without a token', function () {
     $response->assertStatus(401)
         ->assertJson(['code' => 'AUTH_TOKEN_MISSING']);
 });
+
+it('does not include data field on error responses', function () {
+    $response = $this->getJson('/api/v1/users/nonexistent-uuid');
+
+    $response->assertStatus(404)
+        ->assertJsonMissing(['data']);
+});
 ```
 
 ---
@@ -151,6 +157,9 @@ $response->assertJson(['code' => 'USER_NOT_FOUND']);
 
 // Assert field-level errors
 $response->assertJsonPath('errors.email.0', 'Email is required.');
+
+// Assert data field absent on errors
+$response->assertJsonMissing(['data']);
 ```
 
 ---
@@ -197,7 +206,7 @@ End-to-end tests cover full user flows across multiple services.
 
 ### Example (Postman/Newman)
 
-```bash
+```shell
 newman run postman/collections/auth-flow.json \
   --environment postman/environments/staging.json \
   --reporters cli,json
@@ -220,11 +229,11 @@ All of these must pass before a PR can be merged:
 
 - [ ] Unit tests pass
 - [ ] Feature tests pass
-- [ ] Coverage ≥ 80%
+- [ ] Line coverage ≥ 80%, branch coverage ≥ 70%
 - [ ] Contract tests pass (spec matches implementation)
 - [ ] No failing assertions in the test suite
 
-```bash
+```shell
 # Laravel
 docker compose exec auth-service php artisan test --coverage
 
@@ -250,13 +259,15 @@ Before marking an endpoint complete:
 - [ ] Feature test — not found (if applicable)
 - [ ] Feature test — unauthorized
 - [ ] Feature test — forbidden
-- [ ] Coverage ≥ 80%
+- [ ] Feature test — error responses have no `data` field
+- [ ] Line coverage ≥ 80%
 - [ ] All tests passing in CI
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                              |
+|---------|------------|-------------------------------------------------------------------------------------|
+| 1.1     | 2026-06-26 | Replaced Dredd with Schemathesis, specified coverage types (line/branch/function), added data-on-errors test assertion |
+| 1.0     | 2026-06-26 | Initial release                                                                     |

@@ -34,17 +34,6 @@ GET /api/v1/users?status=active,suspended
 GET /api/v1/orders?status=pending,processing
 ```
 
-### Filter Logic
-
-| Scenario | Logic | Example |
-|----------|-------|---------|
-| Multiple values, same parameter | OR | `?status=active,suspended` → active OR suspended |
-| Multiple different parameters | AND | `?status=active&role_id=2` → active AND role 2 |
-
-> **AND within the same field** (e.g. a record must have multiple tags) is not
-> supported via query parameters. Use a `POST /search` endpoint with a request
-> body for complex filter expressions.
-
 ### Range Filters
 
 For date and numeric ranges, use `_from` and `_to` suffixes:
@@ -54,10 +43,21 @@ GET /api/v1/orders?created_at_from=2026-01-01&created_at_to=2026-06-30
 GET /api/v1/products?price_from=10&price_to=100
 ```
 
+### Filter Logic
+
+| Scenario | Logic | Example |
+|----------|-------|---------|
+| Multiple values, same parameter | OR | `?status=active,suspended` → active OR suspended |
+| Multiple different parameters | AND | `?status=active&role_id=2` → active AND role 2 |
+
+> **AND within the same field** (e.g. a record must have multiple tags) is not supported
+> via query parameters. Use a `POST /search` endpoint with a request body for complex
+> filter expressions.
+
 ### Filter Naming Rules
 
 - Use the exact field name from the resource: `status`, `role_id`, `country_id`
-- For nested relationships: `role.name=Admin` → avoid where possible; use `role_id` instead
+- For nested relationships: use `role_id` instead of `role.name=Admin` where possible
 - Never use `filter[field]` bracket syntax
 
 ---
@@ -109,10 +109,10 @@ GET /api/v1/users?page=1&per_page=20
 
 ### Parameters
 
-| Parameter | Default | Maximum | Description |
-|-----------|---------|---------|-------------|
-| `page` | 1 | — | Page number (1-indexed) |
-| `per_page` | 20 | 100 | Items per page |
+| Parameter  | Default | Maximum | Description             |
+| ---------- | ------- | ------- | ----------------------- |
+| `page`     | 1       | —       | Page number (1-indexed) |
+| `per_page` | 20      | 100     | Items per page          |
 
 ### Response
 
@@ -211,7 +211,7 @@ Response only includes the requested fields:
     "success": true,
     "message": "Users retrieved successfully.",
     "data": [
-        { "id": 1, "name": "Vandet", "email": "seanvandet@gmail.com" }
+        { "id": "550e8400-e29b-41d4-a716-446655440000", "name": "Vandet", "email": "seanvandet@gmail.com" }
     ]
 }
 ```
@@ -259,7 +259,7 @@ GET /api/v1/users?include=roles,statuses
 ### Rules
 
 - Without `?include=`, the `included` field is omitted entirely.
-- Unknown include keys are ignored (do not return an error).
+- Unknown include keys are silently ignored (do not return an error).
 - Document available includes per endpoint in the OpenAPI spec.
 - Common includes: `roles`, `statuses`, `countries`, `departments`, `categories`, `currencies`
 
@@ -285,23 +285,24 @@ GET /api/v1/users
 
 ## Parameter Summary
 
-| Parameter | Example | Description |
-|-----------|---------|-------------|
-| `{field}` | `?status=active` | Filter by field value |
-| `{field}_from` | `?created_at_from=2026-01-01` | Range filter start |
-| `{field}_to` | `?created_at_to=2026-12-31` | Range filter end |
-| `sort` | `?sort=-created_at,name` | Sort fields (prefix `-` for descending) |
-| `search` | `?search=Vandet` | Full-text keyword search |
-| `page` | `?page=2` | Page number (offset pagination) |
-| `per_page` | `?per_page=20` | Items per page |
-| `cursor` | `?cursor=abc123` | Cursor (cursor pagination) |
-| `fields` | `?fields=id,name,email` | Field selection |
-| `include` | `?include=roles,statuses` | Reference data |
+| Parameter      | Example                       | Description                             |
+| -------------- | ----------------------------- | --------------------------------------- |
+| `{field}`      | `?status=active`              | Filter by field value                   |
+| `{field}_from` | `?created_at_from=2026-01-01` | Range filter start                      |
+| `{field}_to`   | `?created_at_to=2026-12-31`   | Range filter end                        |
+| `sort`         | `?sort=-created_at,name`      | Sort fields (prefix `-` for descending) |
+| `search`       | `?search=Vandet`              | Full-text keyword search                |
+| `page`         | `?page=2`                     | Page number (offset pagination)         |
+| `per_page`     | `?per_page=20`                | Items per page                          |
+| `cursor`       | `?cursor=abc123`              | Cursor (cursor pagination)              |
+| `fields`       | `?fields=id,name,email`       | Field selection                         |
+| `include`      | `?include=roles,statuses`     | Reference data                          |
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                        |
+|---------|------------|-------------------------------------------------------------------------------|
+| 1.1     | 2026-06-26 | Added filter AND/OR logic clarification, pagination conflict rule             |
+| 1.0     | 2026-06-26 | Initial release                                                               |

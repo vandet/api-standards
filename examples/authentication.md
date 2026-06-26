@@ -1,6 +1,6 @@
 # Example — Authentication
 
-Full login, refresh, and logout flows.
+Full login, refresh, logout, and password change flows.
 
 ---
 
@@ -8,7 +8,7 @@ Full login, refresh, and logout flows.
 
 **Request**
 
-```http
+```
 POST /api/v1/auth/login
 Content-Type: application/json
 Accept: application/json
@@ -78,7 +78,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 POST /api/v1/auth/refresh
 Authorization: Bearer {refresh_token}
 Accept: application/json
@@ -116,13 +116,16 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 POST /api/v1/auth/logout
 Authorization: Bearer {access_token}
 Accept: application/json
 ```
 
 **Response — 200 OK**
+
+> POST actions that return no resource (logout, verify-email, etc.) return `"data": {}`.
+> See [03-response-standard.md](../03-response-standard.md#post-action-with-no-resource-result).
 
 ```json
 {
@@ -138,7 +141,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 GET /api/v1/auth/me
 Authorization: Bearer {access_token}
 Accept: application/json
@@ -151,7 +154,7 @@ Accept: application/json
     "success": true,
     "message": "User retrieved successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
         "email": "seanvandet@gmail.com",
         "roles": ["admin"],
@@ -178,7 +181,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 PATCH /api/v1/auth/password
 Authorization: Bearer {access_token}
 Content-Type: application/json
@@ -187,8 +190,8 @@ Accept: application/json
 
 ```json
 {
-    "current_password": "OldPass123!",
-    "password":         "NewSecurePass456!",
+    "current_password":      "OldPass123!",
+    "password":              "NewSecurePass456!",
     "password_confirmation": "NewSecurePass456!"
 }
 ```

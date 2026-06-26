@@ -38,7 +38,7 @@ Removal
 
 - Define the resource, URL, HTTP method, request shape, and response shape.
 - Check if an existing endpoint already covers the use case.
-- Follow [01-api-design.md](01-api-design.md) for naming and structure.
+- Follow [01-api-design.md](./01-api-design.md) for naming and structure.
 
 ### Review
 
@@ -49,7 +49,7 @@ Removal
 ### OpenAPI Spec
 
 - Write the OpenAPI spec before implementing.
-- Follow [09-openapi-standard.md](09-openapi-standard.md).
+- Follow [09-openapi-standard.md](./09-openapi-standard.md).
 
 ### Implementation
 
@@ -58,8 +58,8 @@ Removal
 
 ### Testing
 
-- Follow [10-testing-standard.md](10-testing-standard.md).
-- Minimum 80% coverage. Feature tests required for every endpoint.
+- Follow [10-testing-standard.md](./10-testing-standard.md).
+- Minimum 80% line coverage. Feature tests required for every endpoint.
 
 ### Deployment
 
@@ -69,11 +69,11 @@ Removal
 ### Monitoring
 
 - Every endpoint is observed from day one.
-- Follow [11-performance-guidelines.md](11-performance-guidelines.md).
+- See [11-performance-guidelines.md](./11-performance-guidelines.md) for metrics and tooling.
 
 ### Deprecation / Removal
 
-- Follow [05-versioning.md](05-versioning.md).
+- Follow [05-versioning.md](./05-versioning.md).
 - Announce before deprecating. Minimum 6-month support period.
 
 ---
@@ -83,6 +83,7 @@ Removal
 Complete before every PR merge:
 
 ### Design
+
 - [ ] URL follows naming conventions (`/api/v{n}/{resource}`)
 - [ ] HTTP method is semantically correct
 - [ ] HTTP status codes are correct
@@ -90,19 +91,23 @@ Complete before every PR merge:
 - [ ] Endpoint documented in OpenAPI spec
 
 ### Request
+
 - [ ] Required and optional headers defined
 - [ ] Request body uses `snake_case`
 - [ ] Input validation is complete
 - [ ] Idempotency-Key required for non-idempotent POST
 
 ### Response
+
 - [ ] Response uses the standard envelope
 - [ ] `success` field present on all responses
 - [ ] Error responses include `code` from the catalogue
+- [ ] `data` field absent on error responses (except 207)
 - [ ] DELETE returns `204 No Content`
 - [ ] Optional envelope fields omitted when absent
 
 ### Security
+
 - [ ] Authentication enforced
 - [ ] Authorization (RBAC) enforced
 - [ ] Tenant scoping enforced (if applicable)
@@ -110,21 +115,24 @@ Complete before every PR merge:
 - [ ] Rate limiting applied
 
 ### Testing
+
 - [ ] Unit tests for all Actions / Services
 - [ ] Feature tests for all endpoints (happy path + error cases)
-- [ ] Coverage ≥ 80%
+- [ ] Line coverage ≥ 80%
 - [ ] All tests passing in CI
 
 ### Documentation
+
 - [ ] OpenAPI spec updated
 - [ ] Error codes registered in catalogue
 - [ ] Migration guide written (if breaking change)
+- [ ] API ownership table updated in service README
 
 ---
 
 ## Error Code Registry Governance
 
-- The error code catalogue lives in [04-error-code-standard.md](04-error-code-standard.md).
+- The error code catalogue lives in [04-error-code-standard.md](./04-error-code-standard.md).
 - No team may ship a new error code without adding it to the catalogue first.
 - Codes are permanent once released — never rename or remove a published code.
 
@@ -133,6 +141,7 @@ Complete before every PR merge:
 ## Breaking Change Policy
 
 ### Allowed (no version bump required)
+
 - Add an optional field to request or response
 - Add a new endpoint
 - Add an optional query parameter
@@ -140,6 +149,7 @@ Complete before every PR merge:
 - Improve response message strings
 
 ### Not Allowed (requires new version)
+
 - Remove a field from request or response
 - Rename a field
 - Change a field's data type
@@ -153,7 +163,7 @@ Complete before every PR merge:
 
 1. Create a new API version (e.g. `v2`).
 2. Implement the change in the new version.
-3. Deprecate the old version following [05-versioning.md](05-versioning.md).
+3. Deprecate the old version following [05-versioning.md](./05-versioning.md).
 4. Publish a migration guide.
 
 ---
@@ -168,7 +178,7 @@ Complete before every PR merge:
 - Never expose stack traces, SQL, or internal paths in error responses.
 - Secrets in environment variables only — never in code or version control.
 
-See [06-authentication.md](06-authentication.md) for full details.
+See [06-authentication.md](./06-authentication.md) for full details.
 
 ---
 
@@ -176,20 +186,21 @@ See [06-authentication.md](06-authentication.md) for full details.
 
 Every API request must log:
 
-| Field | Description |
-|-------|-------------|
-| `request_id` | Unique ID for this request |
-| `correlation_id` | Client-provided or server-generated tracing ID |
-| `user_id` | Authenticated user ID (or `null` for anonymous) |
-| `tenant_id` | Tenant slug (if applicable) |
-| `method` | HTTP method |
-| `endpoint` | URL path |
-| `status` | HTTP status code returned |
-| `duration_ms` | Response time in milliseconds |
-| `ip` | Client IP address |
-| `user_agent` | Client user agent |
+| Field            | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `request_id`     | Unique ID for this request                      |
+| `correlation_id` | Client-provided or server-generated tracing ID  |
+| `user_id`        | Authenticated user ID (or `null` for anonymous) |
+| `tenant_id`      | Tenant slug (if applicable)                     |
+| `method`         | HTTP method                                     |
+| `endpoint`       | URL path                                        |
+| `status`         | HTTP status code returned                       |
+| `duration_ms`    | Response time in milliseconds                   |
+| `ip`             | Client IP address                               |
+| `user_agent`     | Client user agent                               |
 
 **Rules:**
+
 - Never log request bodies containing passwords, tokens, or payment data.
 - Never log full Authorization header values.
 - Mask PII fields in logs (email → `s***@example.com`).
@@ -200,31 +211,26 @@ Every API request must log:
 
 Every service in production must expose metrics:
 
-| Metric | Description |
-|--------|-------------|
-| Latency (p50, p95, p99) | Request response time percentiles |
-| Error rate | Percentage of 4xx and 5xx responses |
-| Throughput | Requests per second |
-| Availability | Uptime percentage |
+| Metric                  | Description                         |
+| ----------------------- | ----------------------------------- |
+| Latency (p50, p95, p99) | Request response time percentiles   |
+| Error rate              | Percentage of 4xx and 5xx responses |
+| Throughput              | Requests per second                 |
+| Availability            | Uptime percentage                   |
 
 ### Distributed Tracing
 
-Use OpenTelemetry for distributed tracing across services.
-
-Every service must propagate the `X-Correlation-ID` header to downstream calls.
+Use OpenTelemetry for distributed tracing across services. Every service must propagate the `X-Correlation-ID` header to downstream calls.
 
 ### Recommended Tooling
 
-See [11-performance-guidelines.md — Monitoring](./11-performance-guidelines.md#monitoring)
-for the full recommended tooling list, alert thresholds, and metrics definitions.
-This section is the single source of truth for observability tooling.
+See [11-performance-guidelines.md — Monitoring](./11-performance-guidelines.md#monitoring) for the full recommended tooling list and alert thresholds. That section is the single source of truth for observability tooling.
 
 ---
 
 ## API Ownership
 
-Every API service must have a designated owner. Copy this template into each
-service's `README.md` and keep it up to date:
+Every API service must have a designated owner. Copy this template into each service's `README.md` and keep it up to date:
 
 ```markdown
 ## API Ownership
@@ -234,18 +240,18 @@ service's `README.md` and keep it up to date:
 | Owner team      | [Team name]                        |
 | On-call contact | [email or Slack channel]           |
 | SLA             | [e.g. 99.9% uptime, p95 < 200ms]  |
-| OpenAPI spec    | `docs/openapi.yaml`                |
-| Changelog       | `CHANGELOG.md`                     |
+| OpenAPI spec    | docs/openapi.yaml                  |
+| Changelog       | CHANGELOG.md                       |
 | Deprecations    | [list any deprecated endpoints]    |
 ```
 
-> This table must be reviewed and updated as part of every API review
-> (see the API Review Checklist above).
+> This table must be reviewed and updated as part of every API review (see the API Review Checklist above).
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                             |
+|---------|------------|------------------------------------------------------------------------------------|
+| 1.1     | 2026-06-26 | Added ownership template, aligned monitoring section with doc 11, added data-on-errors check to review checklist |
+| 1.0     | 2026-06-26 | Initial release                                                                    |

@@ -6,18 +6,17 @@ Latency targets, caching, compression, pagination, and monitoring.
 
 ## Latency Targets
 
-| Endpoint type | Target (p95) | Maximum |
-|---------------|-------------|---------|
-| Simple GET (single resource) | < 100ms | 300ms |
-| List / paginated collection | < 200ms | 500ms |
-| Complex query (filtered, sorted, joined) | < 300ms | 800ms |
-| POST / write operations | < 300ms | 500ms |
-| Report generation / heavy aggregation | < 2000ms | 5000ms |
-| File upload | < 5000ms | 30000ms |
+| Endpoint type                            | Target (p95) | Maximum  |
+| ---------------------------------------- | ------------ | -------- |
+| Simple GET (single resource)             | < 100ms      | 300ms    |
+| List / paginated collection              | < 200ms      | 500ms    |
+| Complex query (filtered, sorted, joined) | < 300ms      | 800ms    |
+| POST / write operations                  | < 300ms      | 500ms    |
+| Report generation / heavy aggregation    | < 2000ms     | 5000ms   |
+| File upload                              | < 5000ms     | 30000ms  |
 
-**Note:** Targets exclude cold starts and first-connection overhead. Measure from the service boundary, not the client.
-
-If an endpoint cannot meet these targets, investigate before shipping — not after.
+> Targets exclude cold starts and first-connection overhead. Measure from the service boundary, not the client.
+> If an endpoint cannot meet these targets, investigate before shipping — not after.
 
 ---
 
@@ -30,6 +29,7 @@ GET /api/v1/users?page=1&per_page=20
 ```
 
 **Rules:**
+
 - Default `per_page`: 20
 - Maximum `per_page`: 100
 - Exceeding the maximum returns `422`
@@ -74,29 +74,29 @@ $users = User::with('role')->paginate(20);
 
 ### When to Cache
 
-| Data type | Cache duration | Strategy |
-|-----------|---------------|---------|
-| Reference/lookup data (roles, statuses, countries) | 60 seconds | In-memory / Redis |
-| User profile | 30 seconds | Redis |
-| Paginated list | 10–30 seconds | Redis (keyed by query params) |
-| Config / feature flags | 5 minutes | Redis |
-| Static/rarely-changing data | 1 hour | Redis |
+| Data type                                          | Cache duration | Strategy                      |
+| -------------------------------------------------- | -------------- | ----------------------------- |
+| Reference/lookup data (roles, statuses, countries) | 60 seconds     | In-memory / Redis             |
+| User profile                                       | 30 seconds     | Redis                         |
+| Paginated list                                     | 10–30 seconds  | Redis (keyed by query params) |
+| Config / feature flags                             | 5 minutes      | Redis                         |
+| Static/rarely-changing data                        | 1 hour         | Redis                         |
 
 ### Cache Key Pattern
 
 ```
 {service}:{version}:{resource}:{id or hash}
-auth:v1:user:1
+
+auth:v1:user:550e8400-e29b-41d4-a716-446655440000
 catalog:v1:categories:all
 catalog:v1:products:page=1:per_page=20:status=active
 ```
 
-> **Redis Cluster Note:** In Redis Cluster, keys are distributed across slots
-> based on a hash of the key name (or the `{hash_tag}` portion if present).
-> To ensure related keys land in the same hash slot, wrap the variable part
-> in `{}`:
+> **Redis Cluster Note:** In Redis Cluster, keys are distributed across slots based on a
+> hash of the key name. To ensure related keys land in the same hash slot, wrap the
+> variable part in `{}`:
 >
-> `auth:v1:{user:1}` → all user:1 keys share the same slot
+> `auth:v1:{user}:550e8400` → all user keys share the same slot.
 >
 > This matters for multi-key operations like `MGET` and Lua scripts.
 > If you are not using Redis Cluster, this is not required.
@@ -106,15 +106,15 @@ catalog:v1:products:page=1:per_page=20:status=active
 Invalidate on write:
 
 ```
-PATCH /users/1 → invalidate cache key auth:v1:user:1
-POST  /users   → invalidate auth:v1:users:*
+PATCH /users/{id}  → invalidate cache key auth:v1:user:{id}
+POST  /users       → invalidate auth:v1:users:*
 ```
 
 ### HTTP Caching Headers
 
 For cacheable GET responses:
 
-```http
+```
 Cache-Control: public, max-age=30
 ETag: "abc123"
 Last-Modified: Thu, 26 Jun 2026 10:30:00 GMT
@@ -122,7 +122,7 @@ Last-Modified: Thu, 26 Jun 2026 10:30:00 GMT
 
 For private or dynamic responses:
 
-```http
+```
 Cache-Control: no-store
 ```
 
@@ -134,7 +134,7 @@ Cache-Control: no-store
 - Minimum response size for compression: 1KB.
 - Set `Content-Encoding: gzip` when compressing.
 
-```http
+```
 Accept-Encoding: gzip, deflate, br
 Content-Encoding: gzip
 ```
@@ -143,59 +143,64 @@ Content-Encoding: gzip
 
 ## Async Processing for Heavy Operations
 
-Endpoints that exceed 500ms should be made asynchronous:
+Endpoints that exceed 500ms should be made asynchronous.
+
+### Initial Response (202 Accepted)
 
 ```json
-// POST /api/v1/reports — response (202 Accepted)
 {
     "success": true,
     "message": "Report generation started.",
     "data": {
-        "job_id": "job_abc123",
+        "job_id": "550e8400-e29b-41d4-a716-446655440000",
         "status": "queued",
-        "status_url": "/api/v1/jobs/job_abc123"
+        "status_url": "/api/v1/jobs/550e8400-e29b-41d4-a716-446655440000"
     }
 }
 ```
 
-Client polls the status endpoint:
-
 ### Job Status Responses
+
+Client polls the status endpoint `GET /api/v1/jobs/{job_id}`:
 
 ```json
 // Queued
 {
     "success": true,
     "message": "Job is queued.",
-    "data": { "job_id": "job_abc123", "status": "queued" }
+    "data": { "job_id": "550e8400-e29b-41d4-a716-446655440000", "status": "queued" }
 }
 
 // Processing
 {
     "success": true,
     "message": "Job is processing.",
-    "data": { "job_id": "job_abc123", "status": "processing", "progress": 42 }
+    "data": { "job_id": "550e8400-e29b-41d4-a716-446655440000", "status": "processing", "progress": 42 }
 }
 
 // Completed
 {
     "success": true,
     "message": "Job completed successfully.",
-    "data": { "job_id": "job_abc123", "status": "completed", "download_url": "/files/report.pdf" }
+    "data": { "job_id": "550e8400-e29b-41d4-a716-446655440000", "status": "completed", "download_url": "/files/report.pdf" }
 }
 
 // Failed
 {
-    "success": false,
-    "message": "Job failed.",
-    "code": "REPORT_GENERATION_FAILED",
-    "data": { "job_id": "job_abc123", "status": "failed" },
-    "errors": {}
+    "success": true,
+    "message": "Job failed. Please try again.",
+    "data": { "job_id": "550e8400-e29b-41d4-a716-446655440000", "status": "failed", "error_code": "REPORT_GENERATION_FAILED" }
 }
 ```
 
+> The poll endpoint (`GET /api/v1/jobs/{job_id}`) always returns `success: true` because the
+> HTTP request itself succeeded. The job's own failure is represented inside `data.status`
+> and `data.error_code` — not in the envelope's `success` flag. This avoids conflating
+> job failure with API request failure, and keeps `data` off error envelopes.
+
 > Register domain-specific job failure codes in the error catalogue:
 > `REPORT_GENERATION_FAILED`, `IMPORT_PROCESSING_FAILED`, etc.
+> See [04-error-code-standard.md](./04-error-code-standard.md).
 
 **Use for:** report exports, bulk imports, email sends, PDF generation.
 
@@ -203,16 +208,16 @@ Client polls the status endpoint:
 
 ## Rate Limiting
 
-| Tier | Limit |
-|------|-------|
-| Anonymous | 60 req/min |
-| Authenticated user | 1000 req/min |
-| Service token | 5000 req/min |
-| Heavy endpoints (reports, exports) | 10 req/min |
+| Tier                               | Limit        |
+| ---------------------------------- | ------------ |
+| Anonymous                          | 60 req/min   |
+| Authenticated user                 | 1000 req/min |
+| Service token                      | 5000 req/min |
+| Heavy endpoints (reports, exports) | 10 req/min   |
 
 Rate limit headers on every response:
 
-```http
+```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 950
 X-RateLimit-Reset: 1719393600
@@ -226,11 +231,11 @@ X-RateLimit-Reset: 1719393600
 - Use persistent connections — avoid reconnecting per request.
 - Monitor active connections — alert when approaching pool limit.
 
-| Service load | Pool size guideline |
-|-------------|---------------------|
-| Low (< 50 req/s) | 10–20 connections |
-| Medium (50–200 req/s) | 20–50 connections |
-| High (> 200 req/s) | 50–100 connections |
+| Service load          | Pool size guideline |
+| --------------------- | ------------------- |
+| Low (< 50 req/s)      | 10–20 connections   |
+| Medium (50–200 req/s) | 20–50 connections   |
+| High (> 200 req/s)    | 50–100 connections  |
 
 ---
 
@@ -238,25 +243,25 @@ X-RateLimit-Reset: 1719393600
 
 Track these metrics per service in production:
 
-| Metric | Alert threshold |
-|--------|----------------|
-| p95 latency | > target for endpoint type |
-| p99 latency | > 2× target |
-| Error rate (5xx) | > 1% |
-| Error rate (4xx) | > 5% |
-| Request queue depth | > 100 pending |
-| DB query time | > 200ms average |
-| Cache hit rate | < 80% (for cached endpoints) |
+| Metric              | Alert threshold              |
+| ------------------- | ---------------------------- |
+| p95 latency         | > target for endpoint type   |
+| p99 latency         | > 2× target                  |
+| Error rate (5xx)    | > 1%                         |
+| Error rate (4xx)    | > 5%                         |
+| Request queue depth | > 100 pending                |
+| DB query time       | > 200ms average              |
+| Cache hit rate      | < 80% (for cached endpoints) |
 
 ### Recommended Tools
 
-| Tool | Purpose |
-|------|---------|
-| Prometheus + Grafana | Metrics and dashboards |
-| OpenTelemetry | Distributed tracing |
-| Jaeger / Zipkin | Trace visualization |
-| Sentry | Error tracking and alerting |
-| Datadog / New Relic | Managed full-stack observability |
+| Tool                 | Purpose                          |
+| -------------------- | -------------------------------- |
+| Prometheus + Grafana | Metrics and dashboards           |
+| OpenTelemetry        | Distributed tracing              |
+| Jaeger / Zipkin      | Trace visualization              |
+| Sentry               | Error tracking and alerting      |
+| Datadog / New Relic  | Managed full-stack observability |
 
 ---
 
@@ -278,6 +283,8 @@ Before shipping a new endpoint:
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                              |
+|---------|------------|-------------------------------------------------------------------------------------|
+| 1.2     | 2026-06-26 | Fixed failed job response to use `success: true` with `data.error_code` (avoids data-on-error conflict); updated job_id examples to UUID v4 |
+| 1.1     | 2026-06-26 | Added all job status states (queued/processing/completed/failed), Redis Cluster cache key note |
+| 1.0     | 2026-06-26 | Initial release                                                                     |

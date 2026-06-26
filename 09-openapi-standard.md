@@ -62,6 +62,25 @@ tags:
 
 ---
 
+## operationId Convention
+
+Format: `{verb}{Resource}` in camelCase. Must be unique across the entire spec.
+
+| HTTP Method  | Pattern              | Example           |
+|--------------|----------------------|-------------------|
+| GET (single) | `get{Resource}`      | `getUser`         |
+| GET (list)   | `list{Resources}`    | `listUsers`       |
+| POST (create)| `create{Resource}`   | `createUser`      |
+| PUT          | `replace{Resource}`  | `replaceUser`     |
+| PATCH        | `update{Resource}`   | `updateUser`      |
+| DELETE       | `delete{Resource}`   | `deleteUser`      |
+| POST (action)| `{verb}{Resource}`   | `cancelOrder`, `verifyUserEmail` |
+
+> Never use hyphens, dots, or slashes in `operationId`. Code generators use this value
+> as a method name — it must be a valid identifier in all target languages.
+
+---
+
 ## Required Endpoint Fields
 
 Every endpoint must include:
@@ -87,7 +106,7 @@ Every endpoint must include:
               success: true
               message: "User retrieved successfully."
               data:
-                id: 1
+                id: "550e8400-e29b-41d4-a716-446655440000"
                 name: "Vandet"
                 email: "seanvandet@gmail.com"
       '401':
@@ -100,35 +119,16 @@ Every endpoint must include:
       - BearerAuth: []
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `tags` | Yes | Group endpoint under a tag |
-| `summary` | Yes | One-line description (≤ 72 characters) |
-| `description` | Yes | Full description of what the endpoint does |
-| `operationId` | Yes | Unique camelCase identifier |
-| `parameters` | Yes (if any) | All path, query, and header parameters |
-| `requestBody` | Yes (POST/PUT/PATCH) | Request body schema and example |
-| `responses` | Yes | All possible response codes with schema and example |
-| `security` | Yes | Authentication requirement |
-
----
-
-## operationId Convention
-
-Format: `{verb}{Resource}` in camelCase. Always unique across the entire spec.
-
-| HTTP Method | Pattern | Example |
-|-------------|---------|---------|
-| GET (single) | `get{Resource}` | `getUser` |
-| GET (list) | `list{Resources}` | `listUsers` |
-| POST (create) | `create{Resource}` | `createUser` |
-| PUT | `replace{Resource}` | `replaceUser` |
-| PATCH | `update{Resource}` | `updateUser` |
-| DELETE | `delete{Resource}` | `deleteUser` |
-| POST (action) | `{verb}{Resource}` | `cancelOrder`, `verifyUserEmail` |
-
-> Never use hyphens, dots, or slashes in `operationId`. Code generators use this
-> value as a method name — it must be a valid identifier in all target languages.
+| Field         | Required             | Description                                         |
+| ------------- | -------------------- | --------------------------------------------------- |
+| `tags`        | Yes                  | Group endpoint under a tag                          |
+| `summary`     | Yes                  | One-line description (≤ 72 characters)              |
+| `description` | Yes                  | Full description of what the endpoint does          |
+| `operationId` | Yes                  | Unique camelCase identifier (see convention above)  |
+| `parameters`  | Yes (if any)         | All path, query, and header parameters              |
+| `requestBody` | Yes (POST/PUT/PATCH) | Request body schema and example                     |
+| `responses`   | Yes                  | All possible response codes with schema and example |
+| `security`    | Yes                  | Authentication requirement                          |
 
 ---
 
@@ -150,8 +150,9 @@ components:
       in: path
       required: true
       schema:
-        type: integer
-      description: The user ID.
+        type: string
+        format: uuid
+      description: The user UUID.
 
     Page:
       name: page
@@ -237,16 +238,6 @@ components:
               items:
                 type: object
 
-    PaginatedSuccessResponse:
-      allOf:
-        - $ref: '#/components/schemas/SuccessResponse'
-        - type: object
-          properties:
-            pagination:
-              $ref: '#/components/schemas/Pagination'
-            links:
-              $ref: '#/components/schemas/Links'
-
     ErrorResponse:
       type: object
       required: [success, message, code, errors]
@@ -282,6 +273,32 @@ components:
           type: integer
         to:
           type: integer
+
+    Links:
+      type: object
+      properties:
+        first:
+          type: string
+          nullable: true
+        last:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+        prev:
+          type: string
+          nullable: true
+
+    PaginatedSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+            links:
+              $ref: '#/components/schemas/Links'
 ```
 
 ---
@@ -309,9 +326,11 @@ requestBody:
 ## Rules
 
 - [ ] Every endpoint has a summary, description, and operationId.
+- [ ] operationId follows the `{verb}{Resource}` camelCase convention.
 - [ ] Every response (success and error) has a schema and example.
-- [ ] All error codes used match the catalogue in [04-error-code-standard.md](04-error-code-standard.md).
+- [ ] All error codes used match the catalogue in [04-error-code-standard.md](./04-error-code-standard.md).
 - [ ] Shared schemas are defined in `components`, not duplicated.
+- [ ] `SuccessResponse.data` uses `oneOf: [object, array]` — not just `object`.
 - [ ] Spec is updated before or alongside implementation — never after.
 - [ ] Spec is validated and passes linting in CI.
 
@@ -319,14 +338,14 @@ requestBody:
 
 ## Recommended Tooling
 
-| Tool | Purpose |
-|------|---------|
-| **Swagger UI** | Interactive API explorer |
-| **Redoc** | Clean documentation rendering |
-| **Stoplight Studio** | Visual spec editor |
-| **spectral** | OpenAPI linting in CI |
+| Tool                  | Purpose                        |
+| --------------------- | ------------------------------ |
+| **Swagger UI**        | Interactive API explorer       |
+| **Redoc**             | Clean documentation rendering  |
+| **Stoplight Studio**  | Visual spec editor             |
+| **spectral**          | OpenAPI linting in CI          |
 | **openapi-generator** | Generate client SDKs from spec |
-| **Postman** | Manual testing and collections |
+| **Postman**           | Manual testing and collections |
 
 ---
 
@@ -335,7 +354,7 @@ requestBody:
 Add OpenAPI linting to the CI pipeline:
 
 ```yaml
-# .github/workflows/api-lint.yml (example)
+# .github/workflows/api-lint.yml
 - name: Lint OpenAPI spec
   run: npx @stoplight/spectral-cli lint docs/openapi.yaml
 ```
@@ -346,6 +365,7 @@ The pipeline must fail if the spec is invalid or missing required fields.
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                           |
+|---------|------------|----------------------------------------------------------------------------------|
+| 1.1     | 2026-06-26 | Added operationId naming convention, fixed SuccessResponse data to oneOf, added PaginatedSuccessResponse and Links schemas |
+| 1.0     | 2026-06-26 | Initial release                                                                  |

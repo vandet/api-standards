@@ -8,13 +8,13 @@ Required and optional headers, request body conventions, naming, date format, an
 
 Every API request must include these headers:
 
-| Header | Value | Description |
-|--------|-------|-------------|
-| `Authorization` | `Bearer {token}` | Authentication token (JWT or service token) |
-| `Content-Type` | `application/json` | Required on POST, PUT, PATCH |
-| `Accept` | `application/json` | Expected response format |
+| Header          | Value              | Description                                 |
+| --------------- | ------------------ | ------------------------------------------- |
+| `Authorization` | `Bearer {token}`   | Authentication token (JWT or service token) |
+| `Content-Type`  | `application/json` | Required on POST, PUT, PATCH                |
+| `Accept`        | `application/json` | Expected response format                    |
 
-```http
+```
 POST /api/v1/users HTTP/1.1
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 Content-Type: application/json
@@ -25,18 +25,18 @@ Accept: application/json
 
 ## Optional Headers
 
-| Header | Value | Description |
-|--------|-------|-------------|
-| `X-Correlation-ID` | UUID v4 | Client-generated ID to trace a request across services |
-| `Idempotency-Key` | UUID v4 | Prevents duplicate operations on retried requests |
-| `Accept-Language` | `en`, `km` | Preferred response language for user-facing messages |
-| `X-Tenant-ID` | `{tenant_slug}` | Tenant identifier for multi-tenant services |
+| Header             | Value           | Description                                            |
+| ------------------ | --------------- | ------------------------------------------------------ |
+| `X-Correlation-ID` | UUID v4         | Client-generated ID to trace a request across services |
+| `Idempotency-Key`  | UUID v4         | Prevents duplicate operations on retried requests      |
+| `Accept-Language`  | `en`, `km`      | Preferred response language for user-facing messages   |
+| `X-Tenant-ID`      | `{tenant_slug}` | Tenant identifier for multi-tenant services            |
 
 ### `X-Correlation-ID`
 
 Clients should generate and attach a UUID v4 for every request. This ID flows through all downstream services and appears in logs, making distributed tracing possible.
 
-```http
+```
 X-Correlation-ID: 550e8400-e29b-41d4-a716-446655440000
 ```
 
@@ -46,11 +46,13 @@ If the client does not send one, the server generates it and returns it in the r
 
 Required for POST requests that create resources or trigger financial operations. If the same key is sent twice, the server returns the original response instead of processing the request again.
 
-```http
+```
 Idempotency-Key: 7f6b2a1c-3d4e-5f6a-7b8c-9d0e1f2a3b4c
 ```
 
 Servers must store idempotency keys for a minimum of 24 hours.
+
+**Enforcement:** If an `Idempotency-Key` is absent on a POST endpoint that requires one, the server must reject the request with `422` and the error code `VALIDATION_FAILED`, including a field error on `idempotency_key`. Servers must never silently process a mutation without one on endpoints where it is required.
 
 ---
 
@@ -73,7 +75,7 @@ All request bodies must be valid JSON.
 
 All fields use **`snake_case`**.
 
-```json
+```
 // Correct
 { "first_name": "Vandet", "phone_number": "+855123456789" }
 
@@ -104,7 +106,7 @@ Use `true` / `false` — never `1` / `0` or strings.
 
 Send `null` explicitly to clear a field. Omitting a field means "do not change it" (for PATCH).
 
-```json
+```
 // PATCH — clears the phone number
 { "phone_number": null }
 
@@ -118,7 +120,7 @@ Send `null` explicitly to clear a field. Omitting a field means "do not change i
 
 Servers must validate all inputs at the boundary. Clients should not rely on server-side validation as a substitute for client-side validation.
 
-Common validation responses: see [03-response-standard.md](03-response-standard.md) and [04-error-code-standard.md](04-error-code-standard.md).
+Common validation responses: see [03-response-standard.md](./03-response-standard.md) and [04-error-code-standard.md](./04-error-code-standard.md).
 
 ---
 
@@ -126,14 +128,14 @@ Common validation responses: see [03-response-standard.md](03-response-standard.
 
 ### Bulk Create
 
-```http
+```
 POST /api/v1/users/bulk
 Content-Type: application/json
 
 {
     "items": [
         { "name": "Vandet", "email": "seanvandet@gmail.com" },
-        { "name": "John", "email": "john@example.com" }
+        { "name": "John",   "email": "john@example.com" }
     ]
 }
 ```
@@ -148,8 +150,8 @@ Response:
         "created": 2,
         "failed": 0,
         "items": [
-            { "id": 1, "name": "Vandet", "email": "seanvandet@gmail.com" },
-            { "id": 2, "name": "John", "email": "john@example.com" }
+            { "index": 0, "success": true, "id": "550e8400-e29b-41d4-a716-446655440000" },
+            { "index": 1, "success": true, "id": "661f9511-f3ac-52e5-b827-557766551111" }
         ]
     }
 }
@@ -157,16 +159,39 @@ Response:
 
 ### Bulk Delete
 
-```http
+```
 DELETE /api/v1/users/bulk
 Content-Type: application/json
 
 {
-    "ids": [1, 2, 3]
+    "ids": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "661f9511-f3ac-52e5-b827-557766551111"
+    ]
 }
 ```
 
 Response: `204 No Content`
+
+### Partial Failure in Bulk Create
+
+When some items fail and others succeed, return `207 Multi-Status`:
+
+```json
+{
+    "success": false,
+    "message": "Some items failed.",
+    "code": "BULK_PARTIAL_FAILURE",
+    "data": {
+        "created": 1,
+        "failed": 1,
+        "items": [
+            { "index": 0, "success": true,  "id": "550e8400-e29b-41d4-a716-446655440000" },
+            { "index": 1, "success": false, "code": "USER_EMAIL_DUPLICATE", "message": "Email already registered." }
+        ]
+    }
+}
+```
 
 ### Partial Failure in Bulk Delete
 
@@ -181,9 +206,9 @@ When some deletions succeed and others fail, return `207 Multi-Status`:
         "deleted": 2,
         "failed": 1,
         "items": [
-            { "index": 0, "id": 1, "success": true },
-            { "index": 1, "id": 2, "success": true },
-            { "index": 2, "id": 3, "success": false, "code": "RESOURCE_LOCKED", "message": "Resource is locked." }
+            { "index": 0, "id": "550e8400-e29b-41d4-a716-446655440000", "success": true },
+            { "index": 1, "id": "661f9511-f3ac-52e5-b827-557766551111", "success": true },
+            { "index": 2, "id": "772a0622-04bd-63f6-c938-668877662222", "success": false, "code": "RESOURCE_LOCKED", "message": "Resource is locked." }
         ]
     }
 }
@@ -192,37 +217,20 @@ When some deletions succeed and others fail, return `207 Multi-Status`:
 If **all** deletions fail, return `422` with `BULK_ALL_FAILED`.
 If **all** succeed, return `204 No Content` as normal.
 
-### Partial Failure in Bulk
-
-When some items fail and others succeed, return `207 Multi-Status`:
-
-```json
-{
-    "success": false,
-    "message": "Some items failed.",
-    "code": "BULK_PARTIAL_FAILURE",
-    "data": {
-        "created": 1,
-        "failed": 1,
-        "items": [
-            { "index": 0, "success": true,  "id": 1 },
-            { "index": 1, "success": false, "code": "USER_EMAIL_DUPLICATE", "message": "Email already registered." }
-        ]
-    }
-}
-```
+> **Note:** `207` responses include `data` alongside `success: false`. This is the only
+> case where `data` appears on an error-type response. See [03-response-standard.md](./03-response-standard.md#207-exception).
 
 ---
 
 ## Idempotency
 
-| Method | Idempotent | Key Required |
-|--------|-----------|--------------|
-| GET | Yes | No |
-| PUT | Yes | No |
-| PATCH | Yes | No |
-| DELETE | Yes | No |
-| POST | No | Yes (for mutations) |
+| Method | Idempotent | Key Required        |
+| ------ | ---------- | ------------------- |
+| GET    | Yes        | No                  |
+| PUT    | Yes        | No                  |
+| PATCH  | Yes        | No                  |
+| DELETE | Yes        | No                  |
+| POST   | No         | Yes (for mutations) |
 
 POST operations that are not idempotent by nature (create, payment, email send) must accept an `Idempotency-Key` header.
 
@@ -232,7 +240,7 @@ POST operations that are not idempotent by nature (create, payment, email send) 
 
 All APIs enforce rate limiting. Responses include headers:
 
-```http
+```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 950
 X-RateLimit-Reset: 1719393600
@@ -240,7 +248,7 @@ X-RateLimit-Reset: 1719393600
 
 When the limit is exceeded:
 
-```http
+```
 HTTP/1.1 429 Too Many Requests
 Retry-After: 30
 ```
@@ -268,8 +276,7 @@ Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Correlation
 
 ### Multiple Allowed Origins
 
-Maintain an explicit allowlist. Reflect the request origin only if it matches the list.
-Never reflect arbitrary origins.
+Maintain an explicit allowlist. Reflect the request origin only if it matches the list. Never reflect arbitrary origins.
 
 ```
 # Environment config
@@ -280,17 +287,17 @@ if request.origin in ALLOWED_ORIGINS:
     response.header("Access-Control-Allow-Origin", request.origin)
     response.header("Vary", "Origin")
 else:
-    reject or return no CORS headers
+    return no CORS headers
 ```
 
-> Never reflect `request.origin` without checking the allowlist first.
-> Always include `Vary: Origin` when reflecting dynamic origins so caches
-> don't serve the wrong CORS header to a different origin.
+> Always include `Vary: Origin` when reflecting dynamic origins so caches don't serve the wrong CORS header to a different origin.
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                             |
+|---------|------------|--------------------------------------------------------------------|
+| 1.2     | 2026-06-26 | Clarified Idempotency-Key enforcement — missing key on required endpoints must return 422 |
+| 1.1     | 2026-06-26 | Added partial failure for bulk delete, multiple allowed origins guidance for CORS |
+| 1.0     | 2026-06-26 | Initial release                                                    |

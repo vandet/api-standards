@@ -8,7 +8,7 @@ Full CRUD with pagination, filtering, sorting, reference data, and bulk operatio
 
 **Request**
 
-```http
+```
 GET /api/v1/users?status=active&sort=-created_at&page=1&per_page=20&include=roles,statuses
 Authorization: Bearer {token}
 Accept: application/json
@@ -22,7 +22,7 @@ Accept: application/json
     "message": "Users retrieved successfully.",
     "data": [
         {
-            "id": 1,
+            "id": "550e8400-e29b-41d4-a716-446655440000",
             "name": "Vandet",
             "email": "seanvandet@gmail.com",
             "role_id": 2,
@@ -30,7 +30,7 @@ Accept: application/json
             "created_at": "2026-06-01T08:00:00Z"
         },
         {
-            "id": 2,
+            "id": "661f9511-f3ac-52e5-b827-557766551111",
             "name": "John Doe",
             "email": "john@example.com",
             "role_id": 1,
@@ -44,9 +44,9 @@ Accept: application/json
             { "id": 2, "name": "Editor" }
         ],
         "statuses": [
-            { "value": "active",   "label": "Active" },
-            { "value": "inactive", "label": "Inactive" },
-            { "value": "suspended","label": "Suspended" }
+            { "value": "active",    "label": "Active" },
+            { "value": "inactive",  "label": "Inactive" },
+            { "value": "suspended", "label": "Suspended" }
         ]
     },
     "pagination": {
@@ -72,8 +72,8 @@ Accept: application/json
 
 **Request**
 
-```http
-GET /api/v1/users/1
+```
+GET /api/v1/users/550e8400-e29b-41d4-a716-446655440000
 Authorization: Bearer {token}
 Accept: application/json
 ```
@@ -85,7 +85,7 @@ Accept: application/json
     "success": true,
     "message": "User retrieved successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
         "email": "seanvandet@gmail.com",
         "role_id": 2,
@@ -114,7 +114,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 POST /api/v1/users
 Authorization: Bearer {token}
 Content-Type: application/json
@@ -139,7 +139,7 @@ Idempotency-Key: 7f6b2a1c-3d4e-5f6a-7b8c-9d0e1f2a3b4c
     "success": true,
     "message": "User created successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
         "email": "seanvandet@gmail.com",
         "role_id": 2,
@@ -180,8 +180,8 @@ Idempotency-Key: 7f6b2a1c-3d4e-5f6a-7b8c-9d0e1f2a3b4c
 
 **Request**
 
-```http
-PATCH /api/v1/users/1
+```
+PATCH /api/v1/users/550e8400-e29b-41d4-a716-446655440000
 Authorization: Bearer {token}
 Content-Type: application/json
 Accept: application/json
@@ -200,7 +200,7 @@ Accept: application/json
     "success": true,
     "message": "User updated successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
         "email": "seanvandet@gmail.com",
         "role_id": 2,
@@ -216,8 +216,8 @@ Accept: application/json
 
 **Request**
 
-```http
-PUT /api/v1/users/1
+```
+PUT /api/v1/users/550e8400-e29b-41d4-a716-446655440000
 Authorization: Bearer {token}
 Content-Type: application/json
 Accept: application/json
@@ -239,7 +239,7 @@ Accept: application/json
     "success": true,
     "message": "User updated successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
         "email": "seanvandet@gmail.com",
         "role_id": 1,
@@ -255,8 +255,8 @@ Accept: application/json
 
 **Request**
 
-```http
-DELETE /api/v1/users/1
+```
+DELETE /api/v1/users/550e8400-e29b-41d4-a716-446655440000
 Authorization: Bearer {token}
 Accept: application/json
 ```
@@ -284,7 +284,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 POST /api/v1/users/bulk
 Authorization: Bearer {token}
 Content-Type: application/json
@@ -295,8 +295,8 @@ Accept: application/json
 {
     "items": [
         { "name": "Vandet",  "email": "seanvandet@gmail.com",  "role_id": 2 },
-        { "name": "John",  "email": "john@example.com",  "role_id": 2 },
-        { "name": "Alice", "email": "alice@example.com", "role_id": 1 }
+        { "name": "John",    "email": "john@example.com",       "role_id": 2 },
+        { "name": "Alice",   "email": "alice@example.com",      "role_id": 1 }
     ]
 }
 ```
@@ -311,15 +311,19 @@ Accept: application/json
         "created": 3,
         "failed": 0,
         "items": [
-            { "index": 0, "success": true, "id": 1 },
-            { "index": 1, "success": true, "id": 2 },
-            { "index": 2, "success": true, "id": 3 }
+            { "index": 0, "success": true, "id": "550e8400-e29b-41d4-a716-446655440000" },
+            { "index": 1, "success": true, "id": "661f9511-f3ac-52e5-b827-557766551111" },
+            { "index": 2, "success": true, "id": "772a0622-04bd-63f6-c938-668877662222" }
         ]
     }
 }
 ```
 
 **Response — 207 Partial failure**
+
+> `207` is the only case where `data` appears alongside `success: false`.
+> The data describes which items succeeded and which failed.
+> See [03-response-standard.md](../03-response-standard.md#207-exception).
 
 ```json
 {
@@ -330,11 +334,12 @@ Accept: application/json
         "created": 2,
         "failed": 1,
         "items": [
-            { "index": 0, "success": true,  "id": 1 },
+            { "index": 0, "success": true,  "id": "550e8400-e29b-41d4-a716-446655440000" },
             { "index": 1, "success": false, "code": "USER_EMAIL_DUPLICATE", "message": "Email already registered." },
-            { "index": 2, "success": true,  "id": 3 }
+            { "index": 2, "success": true,  "id": "772a0622-04bd-63f6-c938-668877662222" }
         ]
-    }
+    },
+    "errors": {}
 }
 ```
 
@@ -344,7 +349,7 @@ Accept: application/json
 
 **Request**
 
-```http
+```
 DELETE /api/v1/users/bulk
 Authorization: Bearer {token}
 Content-Type: application/json
@@ -353,7 +358,11 @@ Accept: application/json
 
 ```json
 {
-    "ids": [1, 2, 3]
+    "ids": [
+        "550e8400-e29b-41d4-a716-446655440000",
+        "661f9511-f3ac-52e5-b827-557766551111",
+        "772a0622-04bd-63f6-c938-668877662222"
+    ]
 }
 ```
 

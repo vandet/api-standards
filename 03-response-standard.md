@@ -1,12 +1,27 @@
 # 03 — Response Standard
 
-Response envelope, field rules, all success and error shapes.
+Version: 3.1
+Status: Active
+Audience: Backend, Frontend, Mobile, DevOps
+Platform: Framework Independent (Laravel, Spring Boot, Node.js, WordPress, Go, Python, etc.)
 
 ---
 
-## Envelope
+## Overview
 
-Every response must follow this envelope. Never return raw models, plain arrays, or unstructured JSON.
+Every API response must follow a consistent envelope regardless of endpoint, platform, or framework.
+
+**Goals:**
+- Predictable response shape across all services
+- Consistent error handling for all clients
+- Easy frontend and mobile integration
+- Scalable across microservices
+- Framework independent
+- Backward compatible
+
+---
+
+## Response Envelope
 
 ### Success — Single Resource
 
@@ -15,10 +30,9 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "success": true,
     "message": "User retrieved successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
-        "email": "seanvandet@gmail.com",
-        "created_at": "2026-06-26T10:30:00Z"
+        "email": "seanvandet@gmail.com"
     }
 }
 ```
@@ -30,8 +44,8 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "success": true,
     "message": "Users retrieved successfully.",
     "data": [
-        { "id": 1, "name": "Vandet" },
-        { "id": 2, "name": "John" }
+        { "id": "550e8400-e29b-41d4-a716-446655440000", "name": "Vandet" },
+        { "id": "661f9511-f3ac-52e5-b827-557766551111", "name": "John" }
     ]
 }
 ```
@@ -43,7 +57,7 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "success": true,
     "message": "Users retrieved successfully.",
     "data": [
-        { "id": 1, "name": "Vandet", "role_id": 2, "status": "active" }
+        { "id": "550e8400-e29b-41d4-a716-446655440000", "name": "Vandet", "role_id": 2, "status": "active" }
     ],
     "pagination": {
         "current_page": 1,
@@ -54,10 +68,10 @@ Every response must follow this envelope. Never return raw models, plain arrays,
         "to": 20
     },
     "links": {
+        "next": "/api/v1/users?page=2",
+        "prev": null,
         "first": "/api/v1/users?page=1",
-        "last":  "/api/v1/users?page=5",
-        "next":  "/api/v1/users?page=2",
-        "prev":  null
+        "last": "/api/v1/users?page=5"
     }
 }
 ```
@@ -69,7 +83,7 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "success": true,
     "message": "Users retrieved successfully.",
     "data": [
-        { "id": 1, "name": "Vandet", "role_id": 2, "status": "active" }
+        { "id": "550e8400-e29b-41d4-a716-446655440000", "name": "Vandet", "role_id": 2, "status": "active" }
     ],
     "included": {
         "roles": [
@@ -91,27 +105,9 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "success": true,
     "message": "User created successfully.",
     "data": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Vandet",
-        "email": "seanvandet@gmail.com",
-        "created_at": "2026-06-26T10:30:00Z"
-    }
-}
-```
-
-### Success — With Technical Metadata
-
-```json
-{
-    "success": true,
-    "message": "Users retrieved successfully.",
-    "data": [...],
-    "meta": {
-        "request_id": "req_0184A",
-        "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
-        "trace_id": "trace_8D921",
-        "execution_time_ms": 27,
-        "api_version": "v1"
+        "email": "seanvandet@gmail.com"
     }
 }
 ```
@@ -124,7 +120,7 @@ Every response must follow this envelope. Never return raw models, plain arrays,
     "message": "Validation failed.",
     "code": "VALIDATION_FAILED",
     "errors": {
-        "email":    ["Email is required.", "Email must be a valid email address."],
+        "email": ["Email is required."],
         "password": ["Minimum 8 characters."]
     }
 }
@@ -157,7 +153,7 @@ Every response must follow this envelope. Never return raw models, plain arrays,
 ```json
 {
     "success": false,
-    "message": "Token has expired. Please log in again.",
+    "message": "Token has expired.",
     "code": "AUTH_TOKEN_EXPIRED",
     "errors": {}
 }
@@ -174,25 +170,11 @@ Every response must follow this envelope. Never return raw models, plain arrays,
 }
 ```
 
-### Error — Server Error (500)
-
-```json
-{
-    "success": false,
-    "message": "An unexpected error occurred. Please try again.",
-    "code": "SERVER_UNEXPECTED_ERROR",
-    "errors": {},
-    "meta": {
-        "request_id": "req_0184A"
-    }
-}
-```
-
 ### Delete — No Content (204)
 
 ```
 HTTP/1.1 204 No Content
-(empty body — envelope does not apply)
+(empty body)
 ```
 
 ---
@@ -201,51 +183,48 @@ HTTP/1.1 204 No Content
 
 ### Success Fields
 
-| Field        | Required | Type            | Description |
-|--------------|----------|-----------------|-------------|
-| `success`    | Yes      | boolean         | Always `true` |
-| `message`    | Yes      | string          | Human-readable, for developers and logs |
-| `data`       | Yes      | object or array | Main resource or collection |
-| `included`   | No       | object          | Reference/lookup data keyed by type |
-| `pagination` | No       | object          | Present only on paginated collections |
-| `links`      | No       | object          | Navigation URLs, returned with pagination |
-| `meta`       | No       | object          | Technical metadata only |
+| Field        | Required | Type             | Description                              |
+|--------------|----------|------------------|------------------------------------------|
+| `success`    | Yes      | boolean          | Always `true` for success responses      |
+| `message`    | Yes      | string           | Human-readable description of the result |
+| `data`       | Yes      | object or array  | Main resource or collection              |
+| `included`   | No       | object           | Reference/lookup data keyed by type      |
+| `pagination` | No       | object           | Present only on paginated collections    |
+| `links`      | No       | object           | Navigation URLs, returned with pagination|
+| `meta`       | No       | object           | Technical metadata only                  |
 
 ### Error Fields
 
-| Field     | Required | Type    | Description |
-|-----------|----------|---------|-------------|
-| `success` | Yes      | boolean | Always `false` |
-| `message` | Yes      | string  | Human-readable error description |
-| `code`    | Yes      | string  | Machine-readable error code |
-| `errors`  | Yes      | object  | Field-level errors or `{}` |
-| `meta`    | No       | object  | Technical metadata (include `request_id`) |
+| Field     | Required | Type    | Description                              |
+|-----------|----------|---------|------------------------------------------|
+| `success` | Yes      | boolean | Always `false` for error responses       |
+| `message` | Yes      | string  | Human-readable description of the error  |
+| `code`    | Yes      | string  | Machine-readable error code              |
+| `errors`  | Yes      | object  | Field-level validation errors or `{}`    |
+| `meta`    | No       | object  | Technical metadata (e.g. `request_id`)   |
 
 ---
 
 ## Field Rules
 
 ### `success`
-- Always a boolean. Never a string or integer.
-- `true` on all success responses, `false` on all error responses.
+- Always a boolean.
+- `true` on success, `false` on any error.
+- Never infer success from HTTP status alone — always check this field.
 
 ### `message`
-- Purpose: developer logs and debugging — not for direct display to end users.
-- Write as a complete sentence ending with a period.
+- Human-readable. Write as a complete sentence.
 - Good: `"User created successfully."` / `"Validation failed."`
-- Bad: `"OK"` / `"Done"` / `"Success"` / `"Error"`
-- For end-user display, use the `errors` fields or handle by `code` in the client.
+- Bad: `"OK"` / `"Done"` / `"Success"`
+- Not intended for display to end users — use `errors` for that.
 
 ### `data`
 - Single resource: return an **object** `{}`.
 - Collection: return an **array** `[]`.
-- Empty collection: return `[]` — never `null`.
+- Empty collection: return `[]`, never `null`.
 - Never return `null` for `data`.
-
-### `data` in error responses
-
-The `data` field must **not** be included in error responses. Error responses
-contain only `success`, `message`, `code`, `errors`, and optionally `meta`.
+- **`data` must not be present on error responses** (where `success` is `false`).
+  Error responses contain only `success`, `message`, `code`, `errors`, and optionally `meta`.
 
 ```json
 // Correct error response — no data field
@@ -266,124 +245,214 @@ contain only `success`, `message`, `code`, `errors`, and optionally `meta`.
 }
 ```
 
+#### POST action with no resource result
+
+For POST actions that return no meaningful resource (e.g. logout, verify-email, send notification),
+return an empty object:
+
+```json
+{
+    "success": true,
+    "message": "Logged out successfully.",
+    "data": {}
+}
+```
+
+#### 207 Exception
+
+`207 Multi-Status` (bulk partial failure) is the only case where `data` appears alongside
+`success: false`. This is because the data describes which items succeeded and which failed,
+and that information is essential for clients to handle the partial result.
+
+```json
+{
+    "success": false,
+    "message": "Some items failed.",
+    "code": "BULK_PARTIAL_FAILURE",
+    "data": {
+        "created": 1,
+        "failed": 1,
+        "items": [
+            { "index": 0, "success": true,  "id": "550e8400-e29b-41d4-a716-446655440000" },
+            { "index": 1, "success": false, "code": "USER_EMAIL_DUPLICATE", "message": "Email already registered." }
+        ]
+    },
+    "errors": {}
+}
+```
+
 ### `included`
-- Object keyed by resource type: `roles`, `statuses`, `countries`, etc.
+- An object keyed by resource type: `roles`, `statuses`, `countries`, etc.
 - Use to bundle reference/lookup data the client needs to render the response.
 - Avoids multiple API roundtrips when rendering forms or tables.
-- Request via: `GET /users?include=roles,statuses`
-- Omit the field entirely when not requested or not applicable.
+- Request via query parameter: `GET /users?include=roles,statuses`
+- Omit the field entirely when not requested.
 
 ### `pagination`
-
-| Field          | Type    | Description |
-|----------------|---------|-------------|
-| `current_page` | integer | Current page number |
-| `last_page`    | integer | Total number of pages |
-| `per_page`     | integer | Items per page |
-| `total`        | integer | Total number of records |
-| `from`         | integer | First record index on this page |
-| `to`           | integer | Last record index on this page |
-
 - Return only on paginated collection endpoints.
 - Never include on single-resource endpoints.
 
+| Field          | Type    | Description                  |
+|----------------|---------|------------------------------|
+| `current_page` | integer | Current page number          |
+| `last_page`    | integer | Total number of pages        |
+| `per_page`     | integer | Items per page               |
+| `total`        | integer | Total number of records      |
+| `from`         | integer | First record index this page |
+| `to`           | integer | Last record index this page  |
+
 ### `links`
 - Always returned together with `pagination`.
-- Use `null` for unavailable directions (e.g. `"prev": null` on page 1).
-
-### `links` — URL format
-
-Links use **relative paths** by default:
-
-```json
-"links": {
-    "next": "/api/v1/users?page=2",
-    "prev": null,
-    "first": "/api/v1/users?page=1",
-    "last": "/api/v1/users?page=5"
-}
-```
-
-If your platform requires absolute URLs (e.g. API gateway consumers, mobile clients),
-return the full URL and document this in your service's OpenAPI spec:
-
-```json
-"links": {
-    "next": "https://api.example.com/api/v1/users?page=2"
-}
-```
-
-> Be consistent within a service — never mix relative and absolute URLs in the same response.
+- `null` for unavailable directions (e.g. `"prev": null` on page 1).
+- Use **relative paths** by default: `/api/v1/users?page=2`
+- If your platform requires absolute URLs, use the full URL and document this in your OpenAPI spec. Be consistent within a service — never mix relative and absolute URLs in the same response.
+- **Preserve all active query parameters** — filter, sort, search, and `per_page` values must be included in every link. If the request was `GET /users?status=active&sort=-created_at&page=1`, the `next` link must be `/api/v1/users?status=active&sort=-created_at&page=2`, not just `/api/v1/users?page=2`.
 
 ### `meta`
 - Technical metadata only — never business data.
-- Good: `request_id`, `correlation_id`, `trace_id`, `api_version`, `execution_time_ms`
+- Good: `request_id`, `trace_id`, `api_version`, `execution_time_ms`
 - Bad: `roles`, `statuses`, `departments` → those belong in `included`
+- Recommended minimal shape:
+
+```json
+"meta": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "execution_time_ms": 42
+}
+```
 
 ### `code` (errors only)
 - Machine-readable. Used by clients to handle errors programmatically.
-- Format: `DOMAIN_ENTITY_REASON` — see [04-error-code-standard.md](04-error-code-standard.md).
+- Format: `DOMAIN_ENTITY_REASON`
 - All uppercase, underscored.
 
-> **Note on `VALIDATION_FAILED`:** This code uses two segments rather than three
-> because validation is not tied to a specific entity — it applies to any request
-> payload. It is a documented exception to the `DOMAIN_ENTITY_REASON` format.
-> Other two-segment codes follow the same logic: `SERVER_UNAVAILABLE`,
-> `SERVER_TIMEOUT`. These are generic cross-entity codes where an entity segment
-> would add no useful information.
-
 ### `errors` (errors only)
-- Keyed by field name. Each value is an array of strings.
-- Return `{}` when there are no field-level errors (business errors, auth errors).
-- Never omit on error responses.
+- Field-level errors keyed by field name. Each value is an array of strings.
+- Return `{}` when there are no field-level errors (e.g. business errors).
+- Never omit this field on error responses.
+
+---
+
+## Error Code Standard
+
+### Format
+
+```
+{DOMAIN}_{ENTITY}_{REASON}
+```
+
+| Segment  | Description                       | Example                     |
+|----------|-----------------------------------|-----------------------------|
+| DOMAIN   | Functional area or service        | `AUTH`, `USER`, `ORDER`     |
+| ENTITY   | The resource involved             | `TOKEN`, `EMAIL`, `PAYMENT` |
+| REASON   | What went wrong (past-tense verb) | `EXPIRED`, `DUPLICATE`, `NOT_FOUND` |
+
+> **Note on two-segment codes:** `VALIDATION_FAILED` and `SERVER_UNAVAILABLE` use two
+> segments because they are generic cross-entity codes where an entity segment adds no
+> useful information. This is a documented exception to the three-segment rule.
+
+### Standard Code Catalogue
+
+| Code                       | HTTP | Description                         |
+|----------------------------|------|-------------------------------------|
+| `VALIDATION_FAILED`        | 422  | Request payload failed validation   |
+| `AUTH_TOKEN_EXPIRED`       | 401  | JWT or session token has expired    |
+| `AUTH_TOKEN_INVALID`       | 401  | Token is malformed or tampered      |
+| `AUTH_USER_UNAUTHORIZED`   | 401  | No credentials provided             |
+| `AUTH_USER_FORBIDDEN`      | 403  | Authenticated but lacks permission  |
+| `USER_NOT_FOUND`           | 404  | User record does not exist          |
+| `USER_EMAIL_DUPLICATE`     | 409  | Email already registered            |
+| `RESOURCE_NOT_FOUND`       | 404  | Generic — entity does not exist     |
+| `SERVER_UNEXPECTED_ERROR`  | 500  | Unhandled server-side exception     |
+| `SERVER_RATE_LIMITED`      | 429  | Request rate limit exceeded         |
+| `API_VERSION_MISSING`      | 404  | Request made without a version prefix |
+| `API_VERSION_RETIRED`      | 410  | The requested API version has been retired |
+
+> Add new codes to the catalogue before using them. Never invent codes outside the format.
+
+---
+
+## HTTP Status Code Reference
+
+| Operation          | Status | Notes                                    |
+|--------------------|--------|------------------------------------------|
+| GET                | 200    |                                          |
+| POST               | 201    | Resource created                         |
+| POST (async)       | 202    | Job accepted, not yet complete           |
+| PUT / PATCH        | 200    | Resource updated                         |
+| DELETE             | 204    | No body returned                         |
+| Bulk partial       | 207    | Some items succeeded, some failed        |
+| Validation error   | 422    |                                          |
+| Unauthorized       | 401    | Missing or invalid credentials           |
+| Forbidden          | 403    | Authenticated but not permitted          |
+| Not Found          | 404    |                                          |
+| Conflict           | 409    | Duplicate or conflicting state           |
+| Rate Limited       | 429    |                                          |
+| Server Error       | 500    |                                          |
+| Unavailable        | 503    | Service temporarily unavailable          |
+
+**Rules:**
+- Never return `200 OK` for an error response.
+- `DELETE` always returns `204` with no body — the envelope does not apply.
+- Always return `Content-Type: application/json` on all responses that include a body.
 
 ---
 
 ## Null vs Omitted Fields
 
-Optional envelope fields must be omitted when not present. Never return `null`, `{}`, or `[]` as a placeholder for an absent optional field.
+Optional fields MUST be omitted when absent. Never return `null`, `{}`, or `[]` as a placeholder.
 
-| Field        | When absent          | Never return         |
-|--------------|----------------------|----------------------|
-| `included`   | Omit entirely        | `"included": null`   |
-| `pagination` | Omit entirely        | `"pagination": null` |
-| `links`      | Omit entirely        | `"links": null`      |
-| `meta`       | Omit entirely        | `"meta": null`       |
-| `data`       | `[]` for collections | `"data": null`       |
-| `errors`     | `{}` on errors       | Omit on errors       |
+| Field        | When no data        | Never return         |
+|--------------|---------------------|----------------------|
+| `included`   | Omit                | `"included": null`   |
+| `pagination` | Omit                | `"pagination": null` |
+| `links`      | Omit                | `"links": null`      |
+| `meta`       | Omit                | `"meta": null`       |
+| `data`       | `[]` for collection | `"data": null`       |
+| `errors`     | `{}` on errors      | Omit on errors       |
 
----
-
-## HTTP Status Codes
-
-| Operation        | Status | Notes |
-|------------------|--------|-------|
-| GET              | 200    | |
-| POST             | 201    | Resource created |
-| PUT / PATCH      | 200    | Resource updated |
-| DELETE           | 204    | No body returned |
-| Validation error | 422    | |
-| Unauthorized     | 401    | Missing or invalid credentials |
-| Forbidden        | 403    | Authenticated but not permitted |
-| Not Found        | 404    | |
-| Conflict         | 409    | Duplicate or state conflict |
-| Bulk partial     | 207    | Multi-status for bulk operations |
-| Rate Limited     | 429    | |
-| Server Error     | 500    | |
-
-**Rules:**
-- Never return `200 OK` for an error response.
-- `DELETE` always returns `204` with no body.
-- Always return `Content-Type: application/json` on all responses that include a body.
-  `DELETE 204` responses have no body and therefore no `Content-Type` header.
+> **Rule of thumb:** envelope fields are omitted when absent; resource data fields use `null`.
 
 ---
 
-## Platform Implementation
+## Optional Include Parameter
 
-Controllers must never build raw JSON. Use a centralized factory.
+Clients request reference data only when needed, keeping default payloads small.
 
-### Laravel
+```
+GET /users?include=roles,statuses
+```
+
+Without `include`, the `included` field is omitted entirely:
+```
+GET /users
+→ { "success": true, "data": [...] }
+```
+
+**Invalid include values** (e.g. `?include=unknown`) are silently ignored — do not return an error. Document available includes per endpoint in the OpenAPI spec.
+
+---
+
+## Design Principles
+
+1. Use HTTP status codes correctly.
+2. Keep response envelopes consistent across all endpoints.
+3. Separate business data (`data`, `included`) from technical metadata (`meta`).
+4. Return only requested data — omit optional fields when absent.
+5. Use machine-readable error codes for programmatic handling.
+6. Include `request_id` in `meta` to support distributed tracing.
+7. Never return `200 OK` for errors.
+8. Keep APIs backward compatible — add fields, never remove or rename.
+9. Always return `Content-Type: application/json` on all responses that include a body.
+
+---
+
+## Platform Implementation Guide
+
+This standard is framework-independent. The pattern is the same on every platform:
+centralize response building in one place so controllers stay clean.
+
+### Laravel (PHP)
 
 ```php
 return ResponseFactory::success($user, 'User retrieved successfully.');
@@ -391,10 +460,10 @@ return ResponseFactory::created($user, 'User created successfully.');
 return ResponseFactory::paginated($users, 'Users retrieved successfully.');
 return ResponseFactory::validationError($errors);
 return ResponseFactory::notFound('USER_NOT_FOUND', 'User not found.');
-return ResponseFactory::deleted();
+return ResponseFactory::deleted(); // 204 No Content
 ```
 
-### Spring Boot
+### Spring Boot (Java)
 
 ```java
 return ResponseFactory.success(user, "User retrieved successfully.");
@@ -402,7 +471,7 @@ return ResponseFactory.created(user, "User created successfully.");
 return ResponseFactory.paginated(users, page, "Users retrieved successfully.");
 return ResponseFactory.validationError(errors);
 return ResponseFactory.notFound("USER_NOT_FOUND", "User not found.");
-return ResponseEntity.noContent().build();
+// DELETE: return ResponseEntity.noContent().build();
 ```
 
 ### Node.js / Express
@@ -413,10 +482,21 @@ res.created(user, 'User created successfully.');
 res.paginated(users, pagination, 'Users retrieved successfully.');
 res.validationError(errors);
 res.notFound('USER_NOT_FOUND', 'User not found.');
-res.status(204).send();
+res.status(204).send(); // DELETE
 ```
 
-### Python / FastAPI
+### Go
+
+```go
+response.Success(w, user, "User retrieved successfully.")
+response.Created(w, user, "User created successfully.")
+response.Paginated(w, users, pagination, "Users retrieved successfully.")
+response.ValidationError(w, errors)
+response.NotFound(w, "USER_NOT_FOUND", "User not found.")
+response.NoContent(w) // DELETE
+```
+
+### Python / FastAPI or Django
 
 ```python
 return ResponseFactory.success(user, "User retrieved successfully.")
@@ -424,13 +504,17 @@ return ResponseFactory.created(user, "User created successfully.")
 return ResponseFactory.paginated(users, pagination, "Users retrieved successfully.")
 return ResponseFactory.validation_error(errors)
 return ResponseFactory.not_found("USER_NOT_FOUND", "User not found.")
-return Response(status_code=204)
+# DELETE: return Response(status_code=204)
 ```
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                                                   |
+|---------|------------|------------------------------------------------------------------------------------------|
+| 3.2     | 2026-06-26 | Added 202 and 503 to HTTP status table, filter param preservation rule for links        |
+| 3.1     | 2026-06-26 | Added explicit no-data rule on errors, 207 exception, POST action data rule, Content-Type requirement, links URL format guidance, invalid include handling, `VALIDATION_FAILED` two-segment explanation, null-vs-omit rule of thumb |
+| 3.0     | 2026-06-26 | Added error `code` field, error code format standard, null-vs-omit rules, DELETE exception, platform implementation guide |
+| 2.0     | 2025-01-01 | Added `included`, `meta`, `links`, `pagination`                                          |
+| 1.0     | 2024-01-01 | Initial draft                                                                            |

@@ -14,11 +14,11 @@ JWT, service tokens, API keys, RBAC, and HTTPS requirements.
 
 ## Authentication Methods
 
-| Method | Header | Used by |
-|--------|--------|---------|
-| JWT Bearer token | `Authorization: Bearer {token}` | End users |
-| Service token | `Authorization: Bearer {SERVICE_TOKEN}` | Inter-service calls |
-| API key | `X-API-Key: {key}` | Third-party integrations |
+| Method           | Header                                  | Used by                  |
+| ---------------- | --------------------------------------- | ------------------------ |
+| JWT Bearer token | `Authorization: Bearer {token}`         | End users                |
+| Service token    | `Authorization: Bearer {SERVICE_TOKEN}` | Inter-service calls      |
+| API key          | `X-API-Key: {key}`                      | Third-party integrations |
 
 ---
 
@@ -30,7 +30,7 @@ Standard JWT with these claims:
 
 ```json
 {
-    "sub": "1",
+    "sub": "550e8400-e29b-41d4-a716-446655440000",
     "user_id": 1,
     "email": "seanvandet@gmail.com",
     "tenant_id": "acme",
@@ -40,33 +40,33 @@ Standard JWT with these claims:
 }
 ```
 
-| Claim | Description |
-|-------|-------------|
-| `sub` | Subject — user ID as string |
-| `user_id` | User ID (integer) |
-| `email` | User email |
-| `tenant_id` | Tenant slug for scoping |
-| `roles` | Array of role names |
-| `iat` | Issued at (Unix timestamp) |
-| `exp` | Expiry (Unix timestamp) |
+| Claim       | Description                 |
+| ----------- | --------------------------- |
+| `sub`       | Subject — user UUID (string), follows RFC 7519 |
+| `user_id`   | User ID (integer) for internal services        |
+| `email`     | User email                  |
+| `tenant_id` | Tenant slug for scoping     |
+| `roles`     | Array of role names         |
+| `iat`       | Issued at (Unix timestamp)  |
+| `exp`       | Expiry (Unix timestamp)     |
 
 > **Note on `sub` vs `user_id`:** Both claims are included for compatibility.
 > `sub` follows RFC 7519 and is expected by third-party JWT libraries.
 > `user_id` is an integer for internal services where integer IDs are required
 > (e.g. database foreign keys). New services should prefer `sub`.
 > If you migrate to UUID-only IDs in the future, `user_id` can be deprecated
-> following the standard versioning policy.
+> following the standard versioning policy in [05-versioning.md](./05-versioning.md).
 
 ### Token Expiry
 
-| Token type | Lifetime |
-|------------|----------|
-| Access token | 15 minutes |
-| Refresh token | 30 days |
+| Token type    | Lifetime   |
+| ------------- | ---------- |
+| Access token  | 15 minutes |
+| Refresh token | 30 days    |
 
 ### Token Refresh
 
-```http
+```
 POST /api/v1/auth/refresh
 Authorization: Bearer {refresh_token}
 ```
@@ -88,11 +88,11 @@ Response:
 
 ### Token Storage (Client Guidance)
 
-| Platform | Recommended storage |
-|----------|---------------------|
-| Web (SPA) | Memory (access token), HttpOnly cookie (refresh token) |
-| Mobile | Secure storage (Keychain / Keystore) |
-| Server-side | Environment variable or secret manager |
+| Platform    | Recommended storage                                    |
+| ----------- | ------------------------------------------------------ |
+| Web (SPA)   | Memory (access token), HttpOnly cookie (refresh token) |
+| Mobile      | Secure storage (Keychain / Keystore)                   |
+| Server-side | Environment variable or secret manager                 |
 
 Never store tokens in `localStorage` — vulnerable to XSS.
 
@@ -118,7 +118,7 @@ Never store tokens in `localStorage` — vulnerable to XSS.
 
 Internal microservices authenticate with a shared service token.
 
-```http
+```
 Authorization: Bearer {SERVICE_TOKEN}
 ```
 
@@ -133,7 +133,7 @@ Authorization: Bearer {SERVICE_TOKEN}
 
 External integrations use long-lived API keys.
 
-```http
+```
 X-API-Key: sk_live_abc123def456
 ```
 
@@ -158,13 +158,13 @@ User → has many Roles → each Role has many Permissions
 {resource}:{action}
 ```
 
-| Permission | Description |
-|------------|-------------|
-| `users:read` | View users |
-| `users:create` | Create users |
-| `users:update` | Update users |
-| `users:delete` | Delete users |
-| `orders:read` | View orders |
+| Permission       | Description    |
+| ---------------- | -------------- |
+| `users:read`     | View users     |
+| `users:create`   | Create users   |
+| `users:update`   | Update users   |
+| `users:delete`   | Delete users   |
+| `orders:read`    | View orders    |
 | `reports:export` | Export reports |
 
 ### Enforcement
@@ -179,7 +179,7 @@ User → has many Roles → each Role has many Permissions
 
 For multi-tenant systems, every authenticated request must be scoped to a tenant.
 
-```http
+```
 X-Tenant-ID: acme
 ```
 
@@ -207,12 +207,13 @@ Before any auth-related code is merged:
 - [ ] Brute force protection on login
 - [ ] MFA challenge flow implemented if `AUTH_MFA_REQUIRED` code is used
 - [ ] MFA challenge endpoint documented in OpenAPI spec (`POST /auth/mfa/verify`)
-- [ ] MFA codes are time-limited (TOTP: 30s window recommended)
+- [ ] MFA codes are time-limited (TOTP: 30-second window recommended)
 
 ---
 
 ## Changelog
 
-| Version | Date       | Change          |
-|---------|------------|-----------------|
-| 1.0     | 2026-06-26 | Initial release |
+| Version | Date       | Change                                                             |
+|---------|------------|--------------------------------------------------------------------|
+| 1.1     | 2026-06-26 | Added sub vs user_id explanation, MFA checklist items             |
+| 1.0     | 2026-06-26 | Initial release                                                    |
