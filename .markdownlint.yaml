@@ -1,0 +1,40 @@
+# markdownlint configuration for api-standards
+# Docs: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+default: true
+
+# MD013 — line length: disable, tables and code blocks make this impractical
+MD013: false
+
+# MD024 — duplicate headings: allow across different sections/files
+MD024:
+  siblings_only: true
+
+# MD033 — inline HTML: allow (used in some table cells)
+MD033: false
+
+# MD041 — first line should be a top-level heading: enforce
+MD041: true
+
+# MD007 — unordered list indentation: 4 spaces (matches our style)
+MD007:
+  indent: 4
+
+# MD010 — no hard tabs
+MD010: true
+
+# MD012 — no multiple consecutive blank lines
+MD012:
+  maximum: 1
+
+# MD022 — headings should be surrounded by blank lines
+MD022: true
+
+# MD031 — fenced code blocks should be surrounded by blank lines
+MD031: true
+
+# MD032 — lists should be surrounded by blank lines
+MD032: true
+
+# MD047 — files should end with a single newline
+MD047: true

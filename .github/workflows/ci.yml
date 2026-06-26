@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Markdown lint
+  # ──────────────────────────────────────────────
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: '**/*.md'
+          config: '.markdownlint.yaml'
+
+  # ──────────────────────────────────────────────
+  # 2. Internal link check
+  # ──────────────────────────────────────────────
+  check-links:
+    name: Check Internal Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check internal Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >
+            --no-progress
+            --include-fragments
+            --base .
+            --offline
+            '**/*.md'
+          fail: true
+
+  # ──────────────────────────────────────────────
+  # 3. Required file structure guard
+  # ──────────────────────────────────────────────
+  check-structure:
+    name: Check Required Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify all standard documents exist
+        run: |
+          required_files=(
+            "README.md"
+            "01-api-design.md"
+            "02-request-standard.md"
+            "03-response-standard.md"
+            "04-error-code-standard.md"
+            "05-versioning.md"
+            "06-authentication.md"
+            "07-query-standard.md"
+            "08-api-governance.md"
+            "09-openapi-standard.md"
+            "10-testing-standard.md"
+            "11-performance-guidelines.md"
+            "examples/authentication.md"
+            "examples/users.md"
+            "examples/orders.md"
+          )
+          missing=0
+          for f in "${required_files[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "MISSING: $f"
+              missing=1
+            fi
+          done
+          if [[ $missing -eq 1 ]]; then
+            echo "One or more required files are missing."
+            exit 1
+          fi
+          echo "All required files present."

@@ -1,0 +1,24 @@
+# lychee link checker configuration
+# Docs: https://lychee.cli.rs/usage/configuration/
+
+# Only check internal/relative links — no external HTTP requests in CI
+offline = true
+
+# Include fragment (#anchor) checking
+include_fragments = true
+
+# Accepted status codes (for future external link checking)
+accept = [200, 201, 206]
+
+# Exclude these patterns from checking
+exclude = [
+    # Placeholder URLs in examples
+    "https://api.example.com",
+    "https://staging-api.example.com",
+    "http://localhost",
+    # Email addresses
+    "mailto:",
+]
+
+# File extensions to scan
+include_path = ["**/*.md"]
