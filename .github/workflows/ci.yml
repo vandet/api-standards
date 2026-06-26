@@ -15,10 +15,10 @@ jobs:
     name: Lint Markdown
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Lint Markdown files
-        uses: DavidAnson/markdownlint-cli2-action@v16
+        uses: DavidAnson/markdownlint-cli2-action@v17
         with:
           globs: '**/*.md'
           config: '.markdownlint.yaml'
@@ -30,7 +30,7 @@ jobs:
     name: Check Internal Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check internal Markdown links
         uses: lycheeverse/lychee-action@v2
@@ -49,7 +49,7 @@ jobs:
     name: Check Required Files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Verify all standard documents exist
         run: |
