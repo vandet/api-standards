@@ -41,3 +41,6 @@ MD032: true
 
 # MD047 — files should end with a single newline
 MD047: true
+
+#MD040 - Fenced code blocks should have a language specified
+MD040: false
