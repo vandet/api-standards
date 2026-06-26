@@ -239,14 +239,10 @@ Rules are configured in `.markdownlint.yaml`. Key overrides:
 | MD036 | disabled | Bold labels (`**Request**`, `**Response**`) are used intentionally in example files |
 | MD060 | disabled | Mixed table styles across files; cosmetic only |
 
-### Release workflow
-
-Releases are created via `release.sh` or the GitHub Actions UI. See [RELEASING.md](./RELEASING.md) for full instructions.
-
 ---
 
 ## Changelog
 
 | Version | Date       | Change |
 |---------|------------|--------|
-| 1.0.0     | 2026-06-26 | Initial release |
+| 1.0.0   | 2026-06-26 | Initial release |
