@@ -17,3 +17,6 @@ desktop.ini
 # Local tooling (if markdownlint or lychee run locally)
 node_modules/
 lychee-out/
+
+RELEASING.md
+release.sh

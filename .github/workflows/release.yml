@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.2.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Validate version format and tag uniqueness
+  # ──────────────────────────────────────────────
+  validate:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version format and tag uniqueness
+        id: check
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+
+          # Enforce vMAJOR.MINOR.PATCH format
+          if ! echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: Version must match vMAJOR.MINOR.PATCH (e.g. v1.2.0). Got: $VERSION"
+            exit 1
+          fi
+
+          # Ensure the tag does not already exist
+          if git tag --list | grep -qx "$VERSION"; then
+            echo "ERROR: Tag $VERSION already exists."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version $VERSION is valid and available."
+
+  # ──────────────────────────────────────────────
+  # 2. Run CI checks before releasing
+  # ──────────────────────────────────────────────
+  ci-checks:
+    name: CI Checks
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+
+  # ──────────────────────────────────────────────
+  # 3. Create tag and GitHub Release
+  # ──────────────────────────────────────────────
+  release:
+    name: Create Release
+    needs: [validate, ci-checks]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create annotated tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ needs.validate.outputs.version }}" \
+            -m "Release ${{ needs.validate.outputs.version }}"
+          git push origin "${{ needs.validate.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+          name: ${{ needs.validate.outputs.version }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          generate_release_notes: true
+          body: |
+            ## API Standards ${{ needs.validate.outputs.version }}
+
+            See the [README](./README.md) for the full document index and changelog.
