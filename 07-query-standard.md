@@ -302,7 +302,6 @@ GET /api/v1/users
 
 ## Changelog
 
-| Version | Date       | Change                                                                        |
-|---------|------------|-------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added filter AND/OR logic clarification, pagination conflict rule             |
-| 1.0     | 2026-06-26 | Initial release                                                               |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

@@ -283,8 +283,6 @@ Before shipping a new endpoint:
 
 ## Changelog
 
-| Version | Date       | Change                                                                              |
-|---------|------------|-------------------------------------------------------------------------------------|
-| 1.2     | 2026-06-26 | Fixed failed job response to use `success: true` with `data.error_code` (avoids data-on-error conflict); updated job_id examples to UUID v4 |
-| 1.1     | 2026-06-26 | Added all job status states (queued/processing/completed/failed), Redis Cluster cache key note |
-| 1.0     | 2026-06-26 | Initial release                                                                     |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

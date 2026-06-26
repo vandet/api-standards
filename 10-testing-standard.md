@@ -267,7 +267,6 @@ Before marking an endpoint complete:
 
 ## Changelog
 
-| Version | Date       | Change                                                                              |
-|---------|------------|-------------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Replaced Dredd with Schemathesis, specified coverage types (line/branch/function), added data-on-errors test assertion |
-| 1.0     | 2026-06-26 | Initial release                                                                     |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

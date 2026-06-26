@@ -296,8 +296,6 @@ else:
 
 ## Changelog
 
-| Version | Date       | Change                                                             |
-|---------|------------|--------------------------------------------------------------------|
-| 1.2     | 2026-06-26 | Clarified Idempotency-Key enforcement — missing key on required endpoints must return 422 |
-| 1.1     | 2026-06-26 | Added partial failure for bulk delete, multiple allowed origins guidance for CORS |
-| 1.0     | 2026-06-26 | Initial release                                                    |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     | 

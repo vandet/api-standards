@@ -226,5 +226,4 @@ Return `null` explicitly when a field exists but has no value. Do not omit the f
 
 | Version | Date       | Change                                              |
 |---------|------------|-----------------------------------------------------|
-| 1.1     | 2026-06-26 | Added UUID library recommendations, bulk action URL pattern, strengthened null-fields exception note |
-| 1.0     | 2026-06-26 | Initial release                                     |
+| 1.0.0   | 2026-06-26 | Initial release                                     |

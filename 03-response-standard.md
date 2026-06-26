@@ -511,10 +511,6 @@ return ResponseFactory.not_found("USER_NOT_FOUND", "User not found.")
 
 ## Changelog
 
-| Version | Date       | Change                                                                                   |
-|---------|------------|------------------------------------------------------------------------------------------|
-| 3.2     | 2026-06-26 | Added 202 and 503 to HTTP status table, filter param preservation rule for links        |
-| 3.1     | 2026-06-26 | Added explicit no-data rule on errors, 207 exception, POST action data rule, Content-Type requirement, links URL format guidance, invalid include handling, `VALIDATION_FAILED` two-segment explanation, null-vs-omit rule of thumb |
-| 3.0     | 2026-06-26 | Added error `code` field, error code format standard, null-vs-omit rules, DELETE exception, platform implementation guide |
-| 2.0     | 2025-01-01 | Added `included`, `meta`, `links`, `pagination`                                          |
-| 1.0     | 2024-01-01 | Initial draft                                                                            |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

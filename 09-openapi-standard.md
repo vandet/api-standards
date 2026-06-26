@@ -365,7 +365,6 @@ The pipeline must fail if the spec is invalid or missing required fields.
 
 ## Changelog
 
-| Version | Date       | Change                                                                           |
-|---------|------------|----------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added operationId naming convention, fixed SuccessResponse data to oneOf, added PaginatedSuccessResponse and Links schemas |
-| 1.0     | 2026-06-26 | Initial release                                                                  |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

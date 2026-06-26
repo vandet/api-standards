@@ -251,7 +251,6 @@ Every API service must have a designated owner. Copy this template into each ser
 
 ## Changelog
 
-| Version | Date       | Change                                                                             |
-|---------|------------|------------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added ownership template, aligned monitoring section with doc 11, added data-on-errors check to review checklist |
-| 1.0     | 2026-06-26 | Initial release                                                                    |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

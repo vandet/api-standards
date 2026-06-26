@@ -192,7 +192,6 @@ When releasing a breaking version, publish a migration guide:
 
 ## Changelog
 
-| Version | Date       | Change                                                                           |
-|---------|------------|----------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added Location header to 410 response, defined behavior for unversioned requests |
-| 1.0     | 2026-06-26 | Initial release                                                                  |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

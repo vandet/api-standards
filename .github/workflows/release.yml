@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. v1.2.0)'
+        description: 'Release version (e.g. v1.0.0)'
         required: true
         type: string
       prerelease:
@@ -34,7 +34,7 @@ jobs:
 
           # Enforce vMAJOR.MINOR.PATCH format
           if ! echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "ERROR: Version must match vMAJOR.MINOR.PATCH (e.g. v1.2.0). Got: $VERSION"
+            echo "ERROR: Version must match vMAJOR.MINOR.PATCH (e.g. v1.0.0). Got: $VERSION"
             exit 1
           fi
 

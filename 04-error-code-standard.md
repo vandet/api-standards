@@ -232,7 +232,6 @@ module.exports = ErrorCodes;
 
 ## Changelog
 
-| Version | Date       | Change                                                                        |
-|---------|------------|-------------------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added API versioning codes, async job codes, 423 note, validation codes note  |
-| 1.0     | 2026-06-26 | Initial release                                                               |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |

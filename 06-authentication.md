@@ -213,7 +213,6 @@ Before any auth-related code is merged:
 
 ## Changelog
 
-| Version | Date       | Change                                                             |
-|---------|------------|--------------------------------------------------------------------|
-| 1.1     | 2026-06-26 | Added sub vs user_id explanation, MFA checklist items             |
-| 1.0     | 2026-06-26 | Initial release                                                    |
+| Version | Date       | Change                                              |
+|---------|------------|-----------------------------------------------------|
+| 1.0.0   | 2026-06-26 | Initial release                                     |
