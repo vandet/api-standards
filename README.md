@@ -211,43 +211,37 @@ Never expose raw auto-increment integers in public URLs.
 
 ## CI Setup
 
-Add this workflow file to your repo to lint the OpenAPI spec on every PR:
+This repository ships with three automated checks that run on every push and pull request to `main`.
 
-```yaml
-# .github/workflows/api-lint.yml
-name: API Lint
+### Workflows
 
-on:
-  pull_request:
-    paths:
-      - '**.yaml'
-      - '**.yml'
-      - '**.md'
+| Workflow | File | Trigger |
+|----------|------|---------|
+| CI | `.github/workflows/ci.yml` | Push / PR to `main`, or called by Release |
+| Release | `.github/workflows/release.yml` | Manual (`workflow_dispatch`) |
 
-jobs:
-  lint-openapi:
-    name: Lint OpenAPI Spec
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+### CI jobs
 
-      - name: Install Spectral
-        run: npm install -g @stoplight/spectral-cli
+| Job | Tool | What it checks |
+|-----|------|---------------|
+| Lint Markdown | `markdownlint-cli2` (via `npx`) | Style and formatting rules defined in `.markdownlint.yaml` |
+| Check Internal Links | `lychee` (offline mode) | Broken internal links and anchors across all `.md` files |
+| Check Required Files | bash | All 11 standard documents and 3 example files are present |
 
-      - name: Lint OpenAPI spec
-        run: spectral lint docs/openapi.yaml --ruleset .spectral.yaml
+### Markdownlint config
 
-  lint-markdown:
-    name: Lint Markdown
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+Rules are configured in `.markdownlint.yaml`. Key overrides:
 
-      - name: Lint Markdown files
-        uses: DavidAnson/markdownlint-cli2-action@v16
-        with:
-          globs: '**/*.md'
-```
+| Rule | Setting | Reason |
+|------|---------|--------|
+| MD013 | disabled | Tables and code blocks make line-length limits impractical |
+| MD033 | disabled | Inline HTML is used in some table cells |
+| MD036 | disabled | Bold labels (`**Request**`, `**Response**`) are used intentionally in example files |
+| MD060 | disabled | Mixed table styles across files; cosmetic only |
+
+### Release workflow
+
+Releases are created via `release.sh` or the GitHub Actions UI. See [RELEASING.md](./RELEASING.md) for full instructions.
 
 ---
 
@@ -255,5 +249,4 @@ jobs:
 
 | Version | Date       | Change |
 |---------|------------|--------|
-| 1.1     | 2026-06-26 | Added 202 and 503 to HTTP status quick reference; updated document version table |
-| 1.0     | 2026-06-26 | Initial release |
+| 1.0.0     | 2026-06-26 | Initial release |
