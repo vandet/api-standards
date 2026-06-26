@@ -6,7 +6,18 @@ Unit, integration, feature, contract, and E2E testing strategy for APIs.
 
 ## Minimum Coverage
 
-**80% test coverage** is required before merging any API code.
+| Coverage type | Minimum required |
+|---------------|-----------------|
+| Line coverage | **80%** |
+| Branch coverage | **70%** |
+| Function coverage | **80%** |
+
+> **Do not game coverage metrics.** A test that executes code without
+> asserting its output does not count as meaningful coverage. Every test
+> must assert at least one of: response status code, response body field,
+> error code, or side effect.
+
+Coverage is enforced in CI — PRs below the threshold are blocked from merging.
 
 ---
 
@@ -16,7 +27,7 @@ Unit, integration, feature, contract, and E2E testing strategy for APIs.
 |------|--------------|-------|
 | Unit | Individual functions, actions, DTOs | PHPUnit/Pest, JUnit, Jest, pytest |
 | Feature / Integration | Full HTTP request → response | Pest, Spring MockMvc, Supertest |
-| Contract | API shape matches the spec | Pact, Dredd |
+| Contract | API shape matches the spec | Schemathesis, Pact, Portman |
 | E2E | Full user flow across services | Playwright, Postman/Newman |
 
 ---
@@ -150,12 +161,21 @@ Contract tests verify that the API response matches the OpenAPI spec. Run these 
 
 ### Tools
 
-- **Dredd** — runs the spec against a live server.
-- **Pact** — consumer-driven contract testing between microservices.
+| Tool | Purpose | Recommended |
+|------|---------|-------------|
+| **Schemathesis** | Property-based contract testing against live server | ✅ Primary |
+| **Portman** | Converts OpenAPI spec to Postman collection and runs tests | ✅ Alternative |
+| **Pact** | Consumer-driven contract testing between microservices | ✅ For microservices |
+| ~~Dredd~~ | ~~Runs spec against live server~~ | ❌ No longer maintained |
 
-```bash
-# Run Dredd against local server
-dredd docs/openapi.yaml http://localhost:8000
+```shell
+# Schemathesis — run against local server
+schemathesis run docs/openapi.yaml --base-url=http://localhost:8000
+
+# With authentication
+schemathesis run docs/openapi.yaml \
+  --base-url=http://localhost:8000 \
+  --header="Authorization: Bearer {token}"
 ```
 
 ---
@@ -232,3 +252,11 @@ Before marking an endpoint complete:
 - [ ] Feature test — forbidden
 - [ ] Coverage ≥ 80%
 - [ ] All tests passing in CI
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

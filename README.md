@@ -84,6 +84,29 @@ Adopting this standard on an existing API with many consumers requires a version
 
 ---
 
+## Versioning
+
+Each document in this repository maintains its own version number.
+The repository as a whole is `v1.0` (initial release).
+Individual documents may be at higher versions if they were iterated
+before the repository was consolidated.
+
+| Document | Version |
+|----------|---------|
+| 01-api-design.md | 1.0 |
+| 02-request-standard.md | 1.0 |
+| 03-response-standard.md | 1.0 |
+| 04-error-code-standard.md | 1.0 |
+| 05-versioning.md | 1.0 |
+| 06-authentication.md | 1.0 |
+| 07-query-standard.md | 1.0 |
+| 08-api-governance.md | 1.0 |
+| 09-openapi-standard.md | 1.0 |
+| 10-testing-standard.md | 1.0 |
+| 11-performance-guidelines.md | 1.0 |
+
+---
+
 ## Quick Reference
 
 ### Response Envelope
@@ -125,6 +148,20 @@ ORDER_PAYMENT_FAILED
 | 422 | Validation failed |
 | 429 | Rate limited |
 | 500 | Server error |
+
+### Null vs Omit — Quick Reference
+
+| Location | No value | Never return |
+|----------|----------|--------------|
+| Resource data fields (inside `data`) | `null` | Omit the field |
+| `included` (envelope) | Omit | `"included": null` |
+| `pagination` (envelope) | Omit | `"pagination": null` |
+| `links` (envelope) | Omit | `"links": null` |
+| `meta` (envelope) | Omit | `"meta": null` |
+| `data` (empty collection) | `[]` | `null` |
+| `errors` (on error responses) | `{}` | Omit `errors` entirely |
+
+> Rule of thumb: **envelope fields are omitted when absent; data fields use `null`.**
 
 ### Request Conventions
 

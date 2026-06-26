@@ -50,6 +50,13 @@ Standard JWT with these claims:
 | `iat` | Issued at (Unix timestamp) |
 | `exp` | Expiry (Unix timestamp) |
 
+> **Note on `sub` vs `user_id`:** Both claims are included for compatibility.
+> `sub` follows RFC 7519 and is expected by third-party JWT libraries.
+> `user_id` is an integer for internal services where integer IDs are required
+> (e.g. database foreign keys). New services should prefer `sub`.
+> If you migrate to UUID-only IDs in the future, `user_id` can be deprecated
+> following the standard versioning policy.
+
 ### Token Expiry
 
 | Token type | Lifetime |
@@ -198,3 +205,14 @@ Before any auth-related code is merged:
 - [ ] Tenant scope enforced on all queries
 - [ ] Rate limiting on auth endpoints (login, refresh)
 - [ ] Brute force protection on login
+- [ ] MFA challenge flow implemented if `AUTH_MFA_REQUIRED` code is used
+- [ ] MFA challenge endpoint documented in OpenAPI spec (`POST /auth/mfa/verify`)
+- [ ] MFA codes are time-limited (TOTP: 30s window recommended)
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

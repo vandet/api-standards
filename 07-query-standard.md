@@ -34,6 +34,17 @@ GET /api/v1/users?status=active,suspended
 GET /api/v1/orders?status=pending,processing
 ```
 
+### Filter Logic
+
+| Scenario | Logic | Example |
+|----------|-------|---------|
+| Multiple values, same parameter | OR | `?status=active,suspended` → active OR suspended |
+| Multiple different parameters | AND | `?status=active&role_id=2` → active AND role 2 |
+
+> **AND within the same field** (e.g. a record must have multiple tags) is not
+> supported via query parameters. Use a `POST /search` endpoint with a request
+> body for complex filter expressions.
+
 ### Range Filters
 
 For date and numeric ranges, use `_from` and `_to` suffixes:
@@ -167,6 +178,24 @@ GET /api/v1/audit-logs?cursor=eyJpZCI6MTAwfQ==&per_page=20
 
 ---
 
+## Pagination Conflict Rule
+
+Clients must not send both `page` and `cursor` in the same request.
+If both are present, the server must return `422`:
+
+```json
+{
+    "success": false,
+    "message": "Validation failed.",
+    "code": "VALIDATION_FAILED",
+    "errors": {
+        "pagination": ["Cannot use 'page' and 'cursor' together. Choose one pagination strategy."]
+    }
+}
+```
+
+---
+
 ## Field Selection
 
 Clients may request a subset of fields to reduce payload size.
@@ -268,3 +297,11 @@ GET /api/v1/users
 | `cursor` | `?cursor=abc123` | Cursor (cursor pagination) |
 | `fields` | `?fields=id,name,email` | Field selection |
 | `include` | `?include=roles,statuses` | Reference data |
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

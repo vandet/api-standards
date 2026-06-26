@@ -242,6 +242,30 @@ HTTP/1.1 204 No Content
 - Empty collection: return `[]` — never `null`.
 - Never return `null` for `data`.
 
+### `data` in error responses
+
+The `data` field must **not** be included in error responses. Error responses
+contain only `success`, `message`, `code`, `errors`, and optionally `meta`.
+
+```json
+// Correct error response — no data field
+{
+    "success": false,
+    "message": "User not found.",
+    "code": "USER_NOT_FOUND",
+    "errors": {}
+}
+
+// Wrong — data field present on error
+{
+    "success": false,
+    "message": "User not found.",
+    "code": "USER_NOT_FOUND",
+    "errors": {},
+    "data": null
+}
+```
+
 ### `included`
 - Object keyed by resource type: `roles`, `statuses`, `countries`, etc.
 - Use to bundle reference/lookup data the client needs to render the response.
@@ -267,6 +291,30 @@ HTTP/1.1 204 No Content
 - Always returned together with `pagination`.
 - Use `null` for unavailable directions (e.g. `"prev": null` on page 1).
 
+### `links` — URL format
+
+Links use **relative paths** by default:
+
+```json
+"links": {
+    "next": "/api/v1/users?page=2",
+    "prev": null,
+    "first": "/api/v1/users?page=1",
+    "last": "/api/v1/users?page=5"
+}
+```
+
+If your platform requires absolute URLs (e.g. API gateway consumers, mobile clients),
+return the full URL and document this in your service's OpenAPI spec:
+
+```json
+"links": {
+    "next": "https://api.example.com/api/v1/users?page=2"
+}
+```
+
+> Be consistent within a service — never mix relative and absolute URLs in the same response.
+
 ### `meta`
 - Technical metadata only — never business data.
 - Good: `request_id`, `correlation_id`, `trace_id`, `api_version`, `execution_time_ms`
@@ -276,6 +324,13 @@ HTTP/1.1 204 No Content
 - Machine-readable. Used by clients to handle errors programmatically.
 - Format: `DOMAIN_ENTITY_REASON` — see [04-error-code-standard.md](04-error-code-standard.md).
 - All uppercase, underscored.
+
+> **Note on `VALIDATION_FAILED`:** This code uses two segments rather than three
+> because validation is not tied to a specific entity — it applies to any request
+> payload. It is a documented exception to the `DOMAIN_ENTITY_REASON` format.
+> Other two-segment codes follow the same logic: `SERVER_UNAVAILABLE`,
+> `SERVER_TIMEOUT`. These are generic cross-entity codes where an entity segment
+> would add no useful information.
 
 ### `errors` (errors only)
 - Keyed by field name. Each value is an array of strings.
@@ -319,6 +374,8 @@ Optional envelope fields must be omitted when not present. Never return `null`, 
 **Rules:**
 - Never return `200 OK` for an error response.
 - `DELETE` always returns `204` with no body.
+- Always return `Content-Type: application/json` on all responses that include a body.
+  `DELETE 204` responses have no body and therefore no `Content-Type` header.
 
 ---
 
@@ -369,3 +426,11 @@ return ResponseFactory.validation_error(errors)
 return ResponseFactory.not_found("USER_NOT_FOUND", "User not found.")
 return Response(status_code=204)
 ```
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

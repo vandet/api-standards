@@ -96,17 +96,29 @@ When a version is deprecated:
 
 ### Step 3 — Removal
 
-After the sunset date:
+After the sunset date, return `410 Gone` for all deprecated version endpoints:
 
-1. Return `410 Gone` for all deprecated version endpoints:
-   ```json
-   {
-       "success": false,
-       "message": "This API version has been retired. Please migrate to /api/v2.",
-       "code": "API_VERSION_RETIRED",
-       "errors": {}
-   }
-   ```
+```
+HTTP/1.1 410 Gone
+Location: /api/v2/users
+Content-Type: application/json
+```
+
+```json
+{
+    "success": false,
+    "message": "This API version has been retired. Please migrate to /api/v2.",
+    "code": "API_VERSION_RETIRED",
+    "errors": {}
+}
+```
+
+> **Note:** Some HTTP clients discard the response body on `410` responses.
+> Always include the `Location` header pointing to the current version
+> as the primary migration signal. The body is supplementary.
+
+Then:
+
 2. Remove the deprecated routes from the codebase.
 3. Update documentation to reflect removal.
 
@@ -128,9 +140,22 @@ Removed  → Routes deleted from codebase
 
 ## Default Version
 
-- Clients should always specify a version explicitly.
-- Never rely on a default version in production.
-- The latest stable version may be accessible without a prefix during development only.
+- Clients must always specify a version explicitly: `/api/v1/users`
+- Requests without a version prefix (e.g. `/api/users`) must return `404 Not Found`.
+- Never silently redirect unversioned requests to the latest version —
+  this hides version drift from clients and causes subtle breakage during upgrades.
+
+```json
+// GET /api/users (no version) → 404
+{
+    "success": false,
+    "message": "API version not specified. Use /api/v1/users.",
+    "code": "API_VERSION_MISSING",
+    "errors": {}
+}
+```
+
+> `API_VERSION_MISSING` is registered in the error code catalogue under the `API` domain.
 
 ---
 
@@ -161,3 +186,11 @@ When releasing a breaking version, publish a migration guide:
 ### New authentication
 - v2 requires OAuth2 Bearer token — see [06-authentication.md](06-authentication.md)
 ```
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

@@ -211,24 +211,41 @@ Every service in production must expose metrics:
 
 Use OpenTelemetry for distributed tracing across services.
 
-Recommended tooling:
-- **Jaeger** — open source, self-hosted
-- **Zipkin** — lightweight alternative
-- **Datadog / New Relic** — managed options
-
 Every service must propagate the `X-Correlation-ID` header to downstream calls.
+
+### Recommended Tooling
+
+See [11-performance-guidelines.md — Monitoring](./11-performance-guidelines.md#monitoring)
+for the full recommended tooling list, alert thresholds, and metrics definitions.
+This section is the single source of truth for observability tooling.
 
 ---
 
 ## API Ownership
 
-Every API service must have a designated owner:
+Every API service must have a designated owner. Copy this template into each
+service's `README.md` and keep it up to date:
 
-| Field | Description |
-|-------|-------------|
-| Owner team | Team responsible for the service |
-| On-call contact | Who to contact when the service is down |
-| SLA | Uptime and latency commitment |
-| Documentation | Link to OpenAPI spec |
+```markdown
+## API Ownership
 
-This information must be maintained in each service's README.
+| Field           | Value                              |
+|-----------------|------------------------------------|
+| Owner team      | [Team name]                        |
+| On-call contact | [email or Slack channel]           |
+| SLA             | [e.g. 99.9% uptime, p95 < 200ms]  |
+| OpenAPI spec    | `docs/openapi.yaml`                |
+| Changelog       | `CHANGELOG.md`                     |
+| Deprecations    | [list any deprecated endpoints]    |
+```
+
+> This table must be reviewed and updated as part of every API review
+> (see the API Review Checklist above).
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

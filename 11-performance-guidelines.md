@@ -91,6 +91,16 @@ catalog:v1:categories:all
 catalog:v1:products:page=1:per_page=20:status=active
 ```
 
+> **Redis Cluster Note:** In Redis Cluster, keys are distributed across slots
+> based on a hash of the key name (or the `{hash_tag}` portion if present).
+> To ensure related keys land in the same hash slot, wrap the variable part
+> in `{}`:
+>
+> `auth:v1:{user:1}` → all user:1 keys share the same slot
+>
+> This matters for multi-key operations like `MGET` and Lua scripts.
+> If you are not using Redis Cluster, this is not required.
+
 ### Cache Invalidation
 
 Invalidate on write:
@@ -150,11 +160,42 @@ Endpoints that exceed 500ms should be made asynchronous:
 
 Client polls the status endpoint:
 
+### Job Status Responses
+
+```json
+// Queued
+{
+    "success": true,
+    "message": "Job is queued.",
+    "data": { "job_id": "job_abc123", "status": "queued" }
+}
+
+// Processing
+{
+    "success": true,
+    "message": "Job is processing.",
+    "data": { "job_id": "job_abc123", "status": "processing", "progress": 42 }
+}
+
+// Completed
+{
+    "success": true,
+    "message": "Job completed successfully.",
+    "data": { "job_id": "job_abc123", "status": "completed", "download_url": "/files/report.pdf" }
+}
+
+// Failed
+{
+    "success": false,
+    "message": "Job failed.",
+    "code": "REPORT_GENERATION_FAILED",
+    "data": { "job_id": "job_abc123", "status": "failed" },
+    "errors": {}
+}
 ```
-GET /api/v1/jobs/job_abc123
-→ { "status": "processing" }
-→ { "status": "completed", "download_url": "..." }
-```
+
+> Register domain-specific job failure codes in the error catalogue:
+> `REPORT_GENERATION_FAILED`, `IMPORT_PROCESSING_FAILED`, etc.
 
 **Use for:** report exports, bulk imports, email sends, PDF generation.
 
@@ -232,3 +273,11 @@ Before shipping a new endpoint:
 - [ ] Rate limiting configured
 - [ ] Heavy operations moved to async queue
 - [ ] Monitoring dashboard updated
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

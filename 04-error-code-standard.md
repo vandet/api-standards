@@ -49,6 +49,22 @@ DOMAIN_ENTITY_REASON
 |------|------|-------------|
 | `VALIDATION_FAILED` | 422 | One or more request fields failed validation |
 
+> **Note:** `USER_EMAIL_INVALID` and `USER_PASSWORD_WEAK` are field-level validation
+> errors. They are returned inside the `errors` object when the top-level code is
+> `VALIDATION_FAILED`. They do not replace `VALIDATION_FAILED` as the top-level code.
+>
+> ```json
+> {
+>     "success": false,
+>     "message": "Validation failed.",
+>     "code": "VALIDATION_FAILED",
+>     "errors": {
+>         "email": ["USER_EMAIL_INVALID: Email format is invalid."],
+>         "password": ["USER_PASSWORD_WEAK: Minimum 8 characters required."]
+>     }
+> }
+> ```
+
 ### User
 
 | Code | HTTP | Description |
@@ -67,6 +83,11 @@ DOMAIN_ENTITY_REASON
 | `RESOURCE_ALREADY_EXISTS` | 409 | Resource already exists (duplicate) |
 | `RESOURCE_CONFLICT` | 409 | Resource is in a conflicting state |
 | `RESOURCE_LOCKED` | 423 | Resource is locked and cannot be modified |
+
+> **Note on `423 Locked`:** HTTP `423` has limited support in some frameworks and
+> API gateways. If your platform does not support it natively, substitute `409 Conflict`
+> with `RESOURCE_LOCKED` in the response body. The error code carries the semantic
+> meaning — the HTTP status is secondary.
 
 ### Bulk Operations
 
@@ -112,6 +133,20 @@ DOMAIN_ENTITY_REASON
 | `PAYMENT_DUPLICATE` | 409 | Payment has already been processed |
 | `PAYMENT_REFUND_FAILED` | 422 | Refund could not be processed |
 | `PAYMENT_METHOD_INVALID` | 422 | Payment method is not valid or not supported |
+
+### API Versioning
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `API_VERSION_MISSING` | 404 | Request made without a version prefix |
+| `API_VERSION_RETIRED` | 410 | The requested API version has been retired |
+
+### Async Jobs
+
+| Code | HTTP | Description |
+|------|------|-------------|
+| `REPORT_GENERATION_FAILED` | 500 | Async report generation job failed |
+| `IMPORT_PROCESSING_FAILED` | 500 | Async import processing job failed |
 
 ### Server & Infrastructure
 
@@ -188,3 +223,11 @@ const ErrorCodes = Object.freeze({
 });
 module.exports = ErrorCodes;
 ```
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

@@ -137,9 +137,15 @@ DELETE /api/v1/users/{id}      Delete a user
 
 ## Identifiers
 
-- Prefer **UUID v4** (`550e8400-e29b-41d4-a716-446655440000`) over auto-increment integers for public-facing IDs.
-- Never expose internal database IDs directly in URLs if they are sequential integers — they allow enumeration attacks.
-- If using integer IDs internally, consider hashing or obfuscating in public URLs.
+- Prefer **UUID v4** (`550e8400-e29b-41d4-a716-446655440000`) for all public-facing IDs.
+- Never expose raw auto-increment integers in public URLs — they allow enumeration attacks.
+- If integer IDs are used internally, expose them as UUID v4 in all API responses.
+- Recommended libraries: `ramsey/uuid` (PHP), `uuid` (Node.js), `java.util.UUID` (Java),
+  `uuid` (Python), `github.com/google/uuid` (Go).
+
+> **Why UUID over Hashids?** Hashids are reversible and require a secret. UUID v4 is
+> random, non-reversible, and universally understood. Use Hashids only if you need
+> short, readable slugs and understand the trade-offs.
 
 ---
 
@@ -199,4 +205,16 @@ Return `null` explicitly when a field exists but has no value. Do not omit the f
 { }
 ```
 
-Exception: optional envelope fields (`included`, `pagination`, `links`, `meta`) are omitted when absent. See [03-response-standard.md](03-response-standard.md).
+> ⚠️ **Exception — Response envelope fields only:**
+> Optional envelope fields (`included`, `pagination`, `links`, `meta`) are **omitted**
+> when absent — not returned as `null`. This rule applies to the envelope structure only.
+> All resource data fields (inside `data`) follow the `null` rule above.
+> See [03-response-standard.md](./03-response-standard.md#null-vs-omitted-fields).
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

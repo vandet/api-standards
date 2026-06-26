@@ -113,6 +113,25 @@ Every endpoint must include:
 
 ---
 
+## operationId Convention
+
+Format: `{verb}{Resource}` in camelCase. Always unique across the entire spec.
+
+| HTTP Method | Pattern | Example |
+|-------------|---------|---------|
+| GET (single) | `get{Resource}` | `getUser` |
+| GET (list) | `list{Resources}` | `listUsers` |
+| POST (create) | `create{Resource}` | `createUser` |
+| PUT | `replace{Resource}` | `replaceUser` |
+| PATCH | `update{Resource}` | `updateUser` |
+| DELETE | `delete{Resource}` | `deleteUser` |
+| POST (action) | `{verb}{Resource}` | `cancelOrder`, `verifyUserEmail` |
+
+> Never use hyphens, dots, or slashes in `operationId`. Code generators use this
+> value as a method name — it must be a valid identifier in all target languages.
+
+---
+
 ## Reusable Components
 
 Define shared schemas, parameters, and responses in `components` to avoid duplication.
@@ -210,7 +229,23 @@ components:
           type: string
           example: "User retrieved successfully."
         data:
-          type: object
+          oneOf:
+            - type: object
+              description: Single resource response
+            - type: array
+              description: Collection response
+              items:
+                type: object
+
+    PaginatedSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+            links:
+              $ref: '#/components/schemas/Links'
 
     ErrorResponse:
       type: object
@@ -306,3 +341,11 @@ Add OpenAPI linting to the CI pipeline:
 ```
 
 The pipeline must fail if the spec is invalid or missing required fields.
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |

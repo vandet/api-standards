@@ -168,6 +168,30 @@ Content-Type: application/json
 
 Response: `204 No Content`
 
+### Partial Failure in Bulk Delete
+
+When some deletions succeed and others fail, return `207 Multi-Status`:
+
+```json
+{
+    "success": false,
+    "message": "Some items could not be deleted.",
+    "code": "BULK_PARTIAL_FAILURE",
+    "data": {
+        "deleted": 2,
+        "failed": 1,
+        "items": [
+            { "index": 0, "id": 1, "success": true },
+            { "index": 1, "id": 2, "success": true },
+            { "index": 2, "id": 3, "success": false, "code": "RESOURCE_LOCKED", "message": "Resource is locked." }
+        ]
+    }
+}
+```
+
+If **all** deletions fail, return `422` with `BULK_ALL_FAILED`.
+If **all** succeed, return `204 No Content` as normal.
+
 ### Partial Failure in Bulk
 
 When some items fail and others succeed, return `207 Multi-Status`:
@@ -241,3 +265,32 @@ Access-Control-Allow-Origin: https://app.example.com
 Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
 Access-Control-Allow-Headers: Authorization, Content-Type, Accept, X-Correlation-ID
 ```
+
+### Multiple Allowed Origins
+
+Maintain an explicit allowlist. Reflect the request origin only if it matches the list.
+Never reflect arbitrary origins.
+
+```
+# Environment config
+ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
+
+# Server logic — pseudocode
+if request.origin in ALLOWED_ORIGINS:
+    response.header("Access-Control-Allow-Origin", request.origin)
+    response.header("Vary", "Origin")
+else:
+    reject or return no CORS headers
+```
+
+> Never reflect `request.origin` without checking the allowlist first.
+> Always include `Vary: Origin` when reflecting dynamic origins so caches
+> don't serve the wrong CORS header to a different origin.
+
+---
+
+## Changelog
+
+| Version | Date       | Change          |
+|---------|------------|-----------------|
+| 1.0     | 2026-06-26 | Initial release |
