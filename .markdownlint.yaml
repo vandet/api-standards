@@ -13,6 +13,9 @@ MD024:
 # MD033 — inline HTML: allow (used in some table cells)
 MD033: false
 
+# MD036 — emphasis as heading: allow (example files use **Request** / **Response** as labels intentionally)
+MD036: false
+
 # MD041 — first line should be a top-level heading: enforce
 MD041: true
 
